@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd" 
+    Version="3.3" 
+    Serie="FFSA" 
+    Folio="75743" 
+    Fecha="2022-04-13T19:01:18" 
+    Sello="XbOg+hYtFio0bKpu5pnJhFCHzj501K95wzvmtiWCUQYhn2kSwy06b0qucVohL70p2TFLQbiuTiaT6lI9g04JK+8fP71YYHg+D+51OUDq4HNmNilkmfuGYBC1j10e0Gx1oM0P5FXT1QwPX/wUOwlC8rlacYWftaoZuOAodp+LXVIpN0kRkfdEf8oMmYTv/Ezo4NqxGrtY+S953T8QjBSRO+YJhRUlBiNrtWMYFSg3bp+joV5BQvu4RY20+jsR0i4Mim55bqNNYuxbNdDQPsfxKgao7s8IEdnpznYBY5h+5Xe2rlOY/rSef5dkBgn8D1PJDteb/l66uzySRk6a0wYJbA==" 
+    FormaPago="04" 
+    NoCertificado="00001000000504446776" 
+    Certificado="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"
+    SubTotal="430.18" Descuento="0.00" Moneda="MXN" Total="499.01" TipoDeComprobante="I" MetodoPago="PUE" LugarExpedicion="66260"
+    xmlns:cfdi="http://www.sat.gob.mx/cfd/3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <cfdi:Emisor Rfc="ESM1606141Q5" Nombre="ELECTRONICA SIERRA MADRE S.A. DE C.V." RegimenFiscal="601" />
+    <cfdi:Receptor Rfc="SES130418QM4" Nombre="SEA EDUCACION Y SERVICIO AC " UsoCFDI="G03" />
+    <cfdi:Conceptos>
+        <cfdi:Concepto ClaveProdServ="39101600" NoIdentificacion="SHOME-120/3" Cantidad="1.00" ClaveUnidad="H87" Unidad="PIEZA" Descripcion="-PAQUETE DE 3 FOCOS LED RGB WIFI" ValorUnitario="430.18" Importe="430.18" Descuento="0">
+            <cfdi:Impuestos>
+                <cfdi:Traslados>
+                    <cfdi:Traslado Base="430.18" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="68.83" />
+                </cfdi:Traslados>
+            </cfdi:Impuestos>
+        </cfdi:Concepto>
+    </cfdi:Conceptos>
+    <cfdi:Impuestos TotalImpuestosTrasladados="68.83">
+        <cfdi:Traslados>
+            <cfdi:Traslado Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="68.83" />
+        </cfdi:Traslados>
+    </cfdi:Impuestos>
+    <cfdi:Complemento>
+        <tfd:TimbreFiscalDigital xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" UUID="2a379252-74a5-476f-a969-59de78d4536c" FechaTimbrado="2022-04-13T19:01:21" RfcProvCertif="DIG130917F9A" SelloCFD="XbOg+hYtFio0bKpu5pnJhFCHzj501K95wzvmtiWCUQYhn2kSwy06b0qucVohL70p2TFLQbiuTiaT6lI9g04JK+8fP71YYHg+D+51OUDq4HNmNilkmfuGYBC1j10e0Gx1oM0P5FXT1QwPX/wUOwlC8rlacYWftaoZuOAodp+LXVIpN0kRkfdEf8oMmYTv/Ezo4NqxGrtY+S953T8QjBSRO+YJhRUlBiNrtWMYFSg3bp+joV5BQvu4RY20+jsR0i4Mim55bqNNYuxbNdDQPsfxKgao7s8IEdnpznYBY5h+5Xe2rlOY/rSef5dkBgn8D1PJDteb/l66uzySRk6a0wYJbA==" NoCertificadoSAT="00001000000411500203" SelloSAT="JwP7v2nr/Zh72a78qqJLupHlWQagS/fXoOLmq+p1Cbyi4CI7xizx6uoAhS77389uUo0vdLlyhgTQn8SeJUdbI252c8+RPZoaD0f7cJvVT+J1fZ162H098azhkteJ+r6uikQY19TirguyuSkEHN+8xsdz7tc8asCrAwbPmqitk1NzSFY1vXgGn3hz0nsOe/f27NDND2Aab0LKvz5aFXGTeukUwshdPTQMJZsO0mcG1cPF0D/SOKO3nY/IRvkA9UH/Gbepv3UFiNtcw9AHcG1I4JeUoPPEtvsij0Cols7e7dLWtKFcCOQsY0ofm0bkrubizSGC9+kow3+UBHTlaJ0Xxg=="
+            xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" />
+    </cfdi:Complemento>
+    <cfdi:Addenda>
+        <digibox:CamposAdicionales xmlns="http://aplicacion.digibox.com.mx/addenda/camposadicionales.xsd"
+            xmlns:digibox="https://desa-gateway.soap.manager.detecno.com/addendas/camposadicionales">
+            <digibox:CampoAdicional valor="76082" nombre="remision" />
+            <digibox:CampoAdicional valor="STEREN SHOP PLAZA FIESTA SAN AGUSTIN" nombre="sucursal" />
+            <digibox:CampoAdicional valor="193" nombre="cliente" />
+            <digibox:CampoAdicional valor="Cliente Recoge" nombre="transporte" />
+            <digibox:CampoAdicional valor="0000580141" nombre="KUNNR" />
+            <digibox:CampoAdicional valor="FERNANDO" nombre="vendedor" />
+            <digibox:CampoAdicional valor="plazafiesta@steren.com.mx" nombre="emisor_correoF" />
+            <digibox:CampoAdicional valor="AV. BATALLON DE SAN PATRICIO NO. 1000 L 1388 RESIDENCIAL SAN AGUSTIN SAN PEDRO GARZA GARCIA NL MX 66260" nombre="emisor_domiciliofiscal" />
+            <digibox:CampoAdicional valor="BEZAVALA@SEAUMN.ORG" nombre="receptor_correo" />
+            <digibox:CampoAdicional valor="BATALLON DE SAN PATRICIO NO. 1000  RESIDENCIAL SAN AGUSTIN SAN PEDRO GARZA GARCIA NL MX 66260" nombre="emisor_expedidoen" />
+            <digibox:CampoAdicional valor="SEA EDUCACION Y SERVICIO AC " nombre="DomicilioEnvio_nombre" />
+            <digibox:CampoAdicional valor="     NL MX 67511" nombre="DomicilioEnvio_domicilio" />
+            <digibox:CampoAdicional valor="     NL MX 67511" nombre="receptor_Domicilio" />
+            <digibox:CampoAdicional valor="Carta" nombre="FormatoPdf" />
+            <digibox:CampoAdicional valor="false" nombre="Retimbrar" />
+            <digibox:CampoAdicional nombre="nota" />
+            <digibox:CampoAdicional valor="POS" nombre="Validacion" />
+            <digibox:CampoAdicional valor="TARJETA CREDITO" nombre="adicional15" />
+            <digibox:CampoAdicional valor="Banco: Banorte" nombre="adicional16" />
+            <digibox:CampoAdicional valor="Tarjeta: 1234" nombre="adicional17" />
+            <digibox:CampoAdicional valor="Cargo: $499.01" nombre="adicional18" />
+            <digibox:CampoAdicional valor="Autorizacion: 1" nombre="adicional19" />
+            <digibox:CampoAdicional valor="Referencia: 1" nombre="adicional20" />
+        </digibox:CamposAdicionales>
+    </cfdi:Addenda>
+</cfdi:Comprobante>
