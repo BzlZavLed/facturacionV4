@@ -25,7 +25,7 @@ class LoginAuthController extends Controller
         $user = User::where('password', $pass)->first();
         
         if($user) {
-            Auth::login($user);
+            //Auth::login($user);
             return redirect('dashboard');
         } else {
             return redirect('/login');
