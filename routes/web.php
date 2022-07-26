@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 */
  
 Route::get('dashboard', [LoginAuthController::class, 'dashboard']); 
-Route::get('customLogin', [LoginAuthController::class, 'customLogin'])->name('customLogin');
+Route::post('customLogin', [LoginAuthController::class, 'customLogin'])->name('customLogin');
 Route::get('login', [LoginAuthController::class, 'index'])->name('login');
 Route::get('registration', [LoginAuthController::class, 'registration'])->name('register-user');
 Route::post('custom-registration', [LoginAuthController::class, 'customRegistration'])->name('register.custom'); 
