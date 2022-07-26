@@ -26,10 +26,11 @@ class LoginAuthController extends Controller
     {
         
         $credentials = $request->only('email', 'password');
+        dd($credentials);
         if (Auth::attempt($credentials)) {
             return view('dashboard');
         }
-        return redirect("login")->withSuccess('are not allowed to access');
+        //return redirect("login")->withSuccess('are not allowed to access');
         //return redirect("auth.login")->withSuccess('Login details are not valid');
     }
  
