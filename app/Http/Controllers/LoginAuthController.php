@@ -26,7 +26,7 @@ class LoginAuthController extends Controller
             ['email', '=', $email],
             ['password', '=', $pass]])->first();
             
-        dd($user);
+        //dd($user);
         if($user) {
             Auth::login($user);
             return redirect('/dashboard');
