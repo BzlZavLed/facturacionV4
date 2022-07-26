@@ -20,9 +20,12 @@ class LoginAuthController extends Controller
     public function customLogin(Request $request)
     {
         $pass = $request->password;
-        
+        $email = $request->email;
 
-        $user = User::where('password', $pass)->first();
+        $user = User::where([
+            ['email', '=', $email],
+            ['password', '=', $pass]])->first();
+            
         dd($user);
         if($user) {
             Auth::login($user);
