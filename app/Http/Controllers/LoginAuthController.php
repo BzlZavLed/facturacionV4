@@ -27,7 +27,7 @@ class LoginAuthController extends Controller
         
         $credentials = $request->only('email', 'password');
         //dd($credentials);
-        if (Auth::attempt($credentials)) {
+        if (!Auth::attempt($credentials)) {
             return view('dashboard');
         }
         //return redirect("login")->withSuccess('are not allowed to access');
