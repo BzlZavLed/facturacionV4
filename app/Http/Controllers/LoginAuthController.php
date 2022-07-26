@@ -15,7 +15,10 @@ class LoginAuthController extends Controller
     {
         return view('auth.login');
     }  
-       
+    public function loginAuto()
+    {
+        return view('auth.login');
+    }    
  
     public function customLogin(Request $request)
     {
