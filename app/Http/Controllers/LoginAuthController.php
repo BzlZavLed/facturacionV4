@@ -15,24 +15,21 @@ class LoginAuthController extends Controller
     {
         return view('auth.login');
     }  
-    public function loginAuto(Request $request)
-    {   
-        $pass = $request->password;
-        $username = $request->username;
-        return view('auth.login');
-    }    
+      
  
     public function customLogin(Request $request)
     {
+        $pass = $request->password;
         
-        $credentials = $request->only('email', 'password');
+
+        $user = User::where('password', $pass)->first();
         
-        if (Auth::attempt($credentials)) {
-            dd(Auth::attempt($credentials));
-            return view('dashboard');
+        if($user) {
+            Auth::login($user);
+            return redirect('dashboard');
+        } else {
+            return redirect('/login');
         }
-        //return redirect("login")->withSuccess('are not allowed to access');
-        //return redirect("auth.login")->withSuccess('Login details are not valid');
     }
  
  
