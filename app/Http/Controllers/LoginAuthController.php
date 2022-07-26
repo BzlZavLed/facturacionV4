@@ -24,7 +24,7 @@ class LoginAuthController extends Controller
  
     public function customLogin(Request $request)
     {
-        dd($request);
+        
         $credentials = $request->only('email', 'password');
         if (Auth::attempt($credentials)) {
             return view('dashboard');
