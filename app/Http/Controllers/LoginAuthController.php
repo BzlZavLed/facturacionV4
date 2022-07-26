@@ -26,7 +26,7 @@ class LoginAuthController extends Controller
     {
         
         $credentials = $request->only('email', 'password');
-        dd($credentials);
+        //dd($credentials);
         if (Auth::attempt($credentials)) {
             return view('dashboard');
         }
