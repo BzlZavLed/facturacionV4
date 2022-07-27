@@ -15,9 +15,7 @@ class LoginAuthController extends Controller
     {
         return view('auth.login');
     }  
-      
- 
-    public function customLogin(Request $request)
+    public function loginBlue (Request $request)
     {
         $pass = $request->password;
         $email = $request->email;
@@ -26,13 +24,28 @@ class LoginAuthController extends Controller
             ['email', '=', $email],
             ['password', '=', $pass]])->first();
             
-        //dd($user);
         if($user) {
             Auth::login($user);
             return redirect('/dashboard');
         } else {
             return redirect('/login');
         }
+    }  
+ 
+    public function customLogin(Request $request)
+    {
+        $request->validate([
+            'email' => 'required',
+            'password' => 'required',
+        ]);
+    
+        $credentials = $request->only('email', 'password');
+        if (Auth::attempt($credentials)) {
+            return redirect()->intended('dashboard')
+                        ->withSuccess('Signed in');
+        }
+   
+        return redirect("auth.login")->withSuccess('Login details are not valid');
     }
  
  
