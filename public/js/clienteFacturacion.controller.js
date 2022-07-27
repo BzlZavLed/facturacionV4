@@ -23,7 +23,7 @@ $("#razonSocialEmisor").on("change", function () {
 /**
  * DOM Manipulation events in concept table
  */
-$("#objImp").on("change", function () {
+/* $("#objImp").on("change", function () {
     var selected = $(this).val();
     if (selected == "002") {
         document.getElementById("impuestos").style.display = "block";
@@ -32,7 +32,7 @@ $("#objImp").on("change", function () {
         document.getElementById("impuestosTable").style.display = "none";
         document.getElementById("impuestos").style.display = "none";
     }
-});
+}); */
 
 $("#claveProductoServicio").on("input", function () {
     var datavalue = $("#claveProductoServicioList")
@@ -60,7 +60,7 @@ $("#addConcept").on("click", function (e) {
     e.preventDefault();
     counterRow++;
     var err = "";
-    if ($("#objImp").val() == "002") {
+    /* if ($("#objImp").val() == "002") {
         var impuestosData = $("#desgloseImpuestos").serializeArray();
         impuestosData.unshift({name:"id",value:counterRow});
         impuestosArray.push(impuestosData);
@@ -72,7 +72,7 @@ $("#addConcept").on("click", function (e) {
             $("#impuestosTabla").append(rowConcepto);
         }
        
-    }
+    } */
     var data = $("#conceptosFactura").serializeArray();
     data.unshift({name:"id",value:counterRow});
     conceptosArray.push(data);
@@ -143,16 +143,16 @@ $("#conceptosTable").on("click", "#borrarConcepto", function () {
             return obj;
         }
       })
-    var impuestosConcepto = impuestosArray.filter(obj => {
+   /*  var impuestosConcepto = impuestosArray.filter(obj => {
         if(obj[0].name == "id" && obj[0].value == id){
             return obj;
         }
-      })
+      }) */
     counterRow--;
     descuentosAmount -= parseFloat(resultConcepto[0][8].value);
     subtotal -= parseFloat(resultConcepto[0][7].value);
     
-    if(impuestosConcepto.length > 0){
+    /* if(impuestosConcepto.length > 0){
         var indexImpuesto = impuestosArray.findIndex(object => {
             return object[0].value === impuestosConcepto[0][0].value;
           });
@@ -161,7 +161,7 @@ $("#conceptosTable").on("click", "#borrarConcepto", function () {
         console.info("iva2: ",iva);
         updateSubtotales("iva", iva); //render IVA in DOM
         impuestosArray.splice(indexImpuesto, 1);
-    }
+    } */
     totalFactura = subtotal - descuentosAmount + iva;
     updateSubtotales("descuentosTotal", descuentosAmount);
     updateSubtotales("subtotalFactura", subtotal); //render subtotal in DOM
@@ -175,17 +175,14 @@ $("#conceptosTable").on("click", "#borrarConcepto", function () {
     
     conceptosArray.splice(indexConcepto, 1);
     
-    $("#conceptosTable > tbody").html("");
-    $("#impuestosTabla > tbody").html("");
-    
-    var dataForTable = generateConceptoIntoTable(conceptosArray,1,1);
+    /* $("#impuestosTabla > tbody").html("");
     var respImpuesto = (impuestosArray.length > 0) ? generateImpuestoIntoTable(impuestosArray,1,1):0;
-    var rowConceptoNew = dataForTable["row"];
     var rowImpuestoNew = respImpuesto["row"];
+    $("#impuestosTabla").append(rowImpuestoNew);  */
     
-   
-
-    $("#impuestosTabla").append(rowImpuestoNew); 
+    $("#conceptosTable > tbody").html("");
+    var dataForTable = generateConceptoIntoTable(conceptosArray,1,1);
+    var rowConceptoNew = dataForTable["row"];
     $("#conceptosTable").append(rowConceptoNew);
 
   
@@ -214,19 +211,22 @@ $("#createClienteForm").on("submit", function (event) {
  * Get json from SEAWEBSERVICE for colegiaturas addendas
  */
 $("#tipoAddenda").on("click", function (event) {
-    event.preventDefault();
-    $.ajaxSetup({
-        headers: {
-            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
-        },
-    });
-    $.ajax({
-        url: "https://200.188.154.68:8086/BlueSystem/db/consultas/wsAddenda.php?fondo=14&bunit=FES&alumnosbd=AlumnosP&financierobd=FinancieroP2021&facturacionbd=FacturacionP",
-        type: "GET",
-        success: function (response) {
-            console.log(response);
-        },
-    });
+    if($(this).val() == "donativos"){
+        event.preventDefault();
+        $.ajaxSetup({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+        });
+        $.ajax({
+            url: "http://200.188.154.68:8086/BlueSystem/db/consultas/wsAddenda.php?fondo=14&bunit=FES&alumnosbd=AlumnosP&financierobd=FinancieroP2021&facturacionbd=FacturacionP",
+            type: "GET",
+            success: function (response) {
+                console.log(response);
+            },
+        });
+    }
+    
 });
 
 $("#btnGenerarXml").on("click", function () {
@@ -289,6 +289,7 @@ $("#btnGenerarXml").on("click", function () {
         }
     });
     cuerpo["conceptos"] = conceptos;
+    cuerpo["addenda"] = $("#tipoAddenda").val();
     console.log(cuerpo);
     $.ajaxSetup({
         headers: {

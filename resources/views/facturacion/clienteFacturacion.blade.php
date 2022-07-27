@@ -347,10 +347,10 @@
                                     <th>Descuentos</th>
                                     <td id="descuentosTotal"></td>
                                 </tr>
-                                <tr>
+                                {{-- <tr>
                                     <th>Impuestos</th>
                                     <td id="iva"></td>
-                                </tr>
+                                </tr> --}}
                                 <tr>
                                     <th>Total</th>
                                     <td id="totalFactura"></td>

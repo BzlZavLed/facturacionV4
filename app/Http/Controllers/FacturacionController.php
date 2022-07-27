@@ -29,7 +29,7 @@ class FacturacionController extends Controller
      * actualizar clientes en el menú de configuración
      */
     public function clientesUpdate(Request $request)
-    {   
+    {
         //dd($request);
         if ($request->name == "emailCliente") {
             $validEmail = $request->validate([
@@ -45,7 +45,7 @@ class FacturacionController extends Controller
             Clientes::where('id', $request->pk)->update([$request->name => $request->value]);
             return response()->json(['code' => 200], 200);
         }
-        return "Error ".$request;
+        return "Error " . $request;
     }
     /**
      * Timbrar factura WIP
@@ -103,26 +103,26 @@ class FacturacionController extends Controller
         $emisor = $comprobante->appendChild(
             $document->createElement('cfdi:Emisor')
         );
-        $emisor->setAttribute('Nombre', $request->cuerpo['razonSocialEmisor']); 
-        $emisor->setAttribute('Rfc', $request->cuerpo['rfc_emisor']); 
-        $emisor->setAttribute('RegimenFiscal', $request->cuerpo['regimen_emisor']); 
-    
+        $emisor->setAttribute('Nombre', $request->cuerpo['razonSocialEmisor']);
+        $emisor->setAttribute('Rfc', $request->cuerpo['rfc_emisor']);
+        $emisor->setAttribute('RegimenFiscal', $request->cuerpo['regimen_emisor']);
+
         $receptor = $comprobante->appendChild(
             $document->createElement('cfdi:Receptor')
         );
-    
-        $receptor->setAttribute('Rfc', strtoupper($request->cuerpo['rfcCliente'])); 
+
+        $receptor->setAttribute('Rfc', strtoupper($request->cuerpo['rfcCliente']));
         $receptor->setAttribute('Nombre', $request->cuerpo['nombreCliente']);
         $receptor->setAttribute('DomicilioFiscalReceptor', $request->cuerpo['DomicilioFiscalReceptor']);
         $receptor->setAttribute('RegimenFiscalReceptor', '616'); //regimen fiscal del receptor AGREGAR A CLIENTES
         $receptor->setAttribute('UsoCFDI', $request->cuerpo['usoCfdiCliente']);
-        
-        
+
+
         $conceptos = $comprobante->appendChild(
             $document->createElement('cfdi:Conceptos')
         );
 
-        foreach($request->cuerpo['conceptos'] as $concepto) {
+        foreach ($request->cuerpo['conceptos'] as $concepto) {
             $conceptoXml = $document->createElement('cfdi:Concepto');
             $conceptoXml->setAttribute('ClaveProdServ', $concepto['ClaveProdServ']);
             $conceptoXml->setAttribute('NoIdentificacion', $concepto['NoIdentificacion']);
@@ -133,10 +133,59 @@ class FacturacionController extends Controller
             $conceptoXml->setAttribute('Importe', $concepto['Importe']);
             $conceptoXml->setAttribute('Descuento', $concepto['Descuento']);
             $conceptoXml->setAttribute("ObjetoImp", $concepto['ObjetoImpuestos']);
+            if ($concepto['ObjetoImpuestos'] == "02") {
+                $impuestos = $conceptoXml->appendChild(
+                    $document->createElement('cfdi:Impuestos')
+                );
+                $traslados = $impuestos->appendChild(
+                    $document->createElement('cfdi:Traslados')
+                );
+                $traslado = $traslados->appendChild(
+                    $document->createElement('cfdi:Traslado')
+                );
+                $traslado->setAttribute('Base', $concepto['Importe']);
+                $traslado->setAttribute('Impuesto', '002');
+                $traslado->setAttribute('TipoFactor', 'Tasa');
+                $traslado->setAttribute('TasaOCuota', '0.000000');
+                $traslado->setAttribute('Importe', '0.00');
+            }
             $conceptos->appendChild($conceptoXml);
         }
-        
-       
+
+
+        //global impuesto node
+        $impuestosTotal = $comprobante->appendChild(
+            $document->createElement('cfdi:Impuestos')
+        );
+        $traslados = $impuestosTotal->appendChild(
+            $document->createElement('cfdi:Traslados')
+        );
+        $traslado = $traslados->appendChild(
+            $document->createElement('cfdi:Traslado')
+        );
+        $traslado->setAttribute('Impuesto', '002');
+        $traslado->setAttribute('TipoFactor', 'Tasa');
+        $traslado->setAttribute('TasaOCuota', '0.000000');
+        $traslado->setAttribute('Importe', '0.00');
+
+        if($request->cuerpo['addenda'] != 'ventas'){
+            if($request->cuerpo['addenda'] != 'donativos'){
+                $complemento = $comprobante->appendChild(
+                    $document->createElement('cfdi:Complemento')
+                ); 
+                $donataria = $complemento->appendChild(
+                    $document->createElement('donat:Donatarias')
+                ); 
+                $donataria->setAttribute('version', '002');
+                $donataria->setAttribute('noAutorizacion', '002'); 
+                $donataria->setAttribute('fechaAutorizacion', '002'); 
+                $donataria->setAttribute('leyenda', 'Este comprobante ampara un donativo, el cual será destinado por la donataria a 
+                                                     los fines propios de su objeto social. En el caso de que los bienes donados hayan 
+                                                     sido deducidos previamente para los efectos del impuesto sobre la renta, este donativo 
+                                                     no es deducible. La reproducción no autorizada de este comprobante constituye
+                                                     un delito en los términos de las disposiciones fiscales.');  
+            }
+        }
 
 
         $document->appendChild($comprobante);
@@ -326,7 +375,8 @@ class FacturacionController extends Controller
         return redirect()->route('objetoImpuesto');
     }
     /**Guardar concepto interno */
-    public function guardarConceptoInterno(Request $request){
+    public function guardarConceptoInterno(Request $request)
+    {
         ConceptoInterno::create(
             [
                 'claveProductoServicio'  => $request->claveProductoServicio,
@@ -334,7 +384,7 @@ class FacturacionController extends Controller
                 'numeroIdent'          => $request->numeroIdent,
                 'cuentasContables'         => $request->cuentasContables,
                 'claveUnidadFacturacion'       => $request->claveUnidadFacturacion
-                
+
             ]
         );
         return redirect()->route('conceptosInternos');
@@ -348,7 +398,4 @@ class FacturacionController extends Controller
         ConceptoInterno::destroy($id);
         return redirect()->route('conceptosInternos');
     }
-
-    
-
 }
