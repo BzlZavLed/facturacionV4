@@ -9,6 +9,9 @@
                 <!-- {{ csrf_field() }} -->
                 <div class="row">
                     <div class="col-sm-3">
+                        <label for="nombreColegio"> Nombre del colegio</label>
+                        <input type="text" id="nombreColegio" name="nombreColegio" class="form-control">
+
                         <label for="razon_emisor"> Razón Social</label>
                         <input type="text" id="razon_emisor" name="razon_emisor" class="form-control">
 
@@ -50,7 +53,10 @@
                         <input type="text" name="fechaDonataria" id="fechaDonataria" class="form-control">
 
                         <label for="permisoDonataria">Permiso(Donataria)</label>
-                        <input type="text" name="permisoDonataria" id="permisoDonataria" class="form-control"><br>
+                        <input type="text" name="permisoDonataria" id="permisoDonataria" class="form-control">
+                        
+                        <label for="permisoDonataria">Numero de certificado</label>
+                        <input type="text" name="numeroCertificado" id="numeroCertificado" class="form-control"><br>
 
                         <button type="submit" class="btn btn-success offset-md-8" id="guardarCliente">Guardar</button>
                     </div>
@@ -113,8 +119,10 @@
                             <th>leyendaDonataria</th>
                             <th>fechaDonataria</th>
                             <th>permisoDonataria</th>
+                            <th>numeroCertificado</th>
                             <th>cert</th>
                             <th>key</th>
+                            <th>Colegio</th>
                             <th>pass</th>
                             <th>acción</th>
                         </thead>
@@ -127,6 +135,7 @@
 
                             @foreach ($emisor as $clave)
                                 <tr>
+                                    <td>{{ $clave->nombreColegio }}</td>
                                     <td>{{ $clave->razon_emisor }}</td>
                                     <td>{{ $clave->rfc_emisor }}</td>
                                     <td>{{ $clave->regimen_emisor }}</td>
@@ -138,6 +147,7 @@
                                     <td>{{ $clave->leyendaDonataria }}</td>
                                     <td>{{ $clave->fechaDonataria }}</td>
                                     <td>{{ $clave->permisoDonataria }}</td>
+                                    <td>{{ $clave->numeroCertificado }}</td>
                                     <td>
                                         @if ($clave->path_cer != null)
                                             <a href="{{ asset($clave->name_cer)}}" target="_blank">{{$clave->name_cer}}<i class="fa fa-link"

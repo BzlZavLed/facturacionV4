@@ -31,7 +31,9 @@ Route::get('objetoImpuesto',[ViewsController::class, 'objetoImpuesto'])->name('o
 Route::get('emisor',[ViewsController::class, 'emisor'])->name('emisor');//CONFIGURACION DE DATOS DE EMISOR
 Route::get('clientes', [ViewsController::class, 'clientes'])->name('clientes'); // ACTUALIZAR CLIENTES
 Route::get('conceptosInternos', [ViewsController::class, 'conceptosInternos'])->name('conceptosInternos'); // conceptosInternos
+
 //actions catalogs
+Route::get('getClientes', [ViewsController::class, 'getClientes'])->name('getClientes'); // conceptosInternos
 Route::post('guardarCliente',[FacturacionController::class, 'guardarCliente'])->name('guardarCliente');//RUTA PARA GUARDAR CLIENTE
 Route::get('updateClaveProdServ/{id}/{value}', [FacturacionController::class, 'updateClaveProdServ'])->name('updateClaveProdServ');//CATALOGO CONFIGURACION UPDATE
 Route::get('updateClaveUnidad/{id}/{value}', [FacturacionController::class, 'updateClaveUnidad'])->name('updateClaveUnidad');//CLAVE UNIDAD CONFIGURACION UPDATE

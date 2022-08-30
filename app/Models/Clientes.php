@@ -9,6 +9,6 @@ class Clientes extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'nombreCliente', 'razonCliente', 'rfcCliente', 'emailCliente', 'usoCfdiCliente','personaFisicaCliente','bunit','DomicilioFiscalReceptor'
+        'nombreCliente', 'razonCliente', 'rfcCliente', 'emailCliente', 'usoCfdiCliente','personaFisicaCliente','bunit','DomicilioFiscalReceptor','RegimenFiscalReceptor'
       ];
 }

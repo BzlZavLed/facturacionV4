@@ -141,6 +141,7 @@ return [
         /*
          * Laravel Framework Service Providers...
          */
+        SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class,
         FruitCake\Cors\CorsServiceProvider::class,
         Illuminate\Auth\AuthServiceProvider::class,
         Illuminate\Broadcasting\BroadcastServiceProvider::class,
@@ -192,6 +193,7 @@ return [
     */
 
     'aliases' => Facade::defaultAliases()->merge([
+        'QrCode' => SimpleSoftwareIO\QrCode\Facades\QrCode::class
         // 'ExampleClass' => App\Example\ExampleClass::class,
     ])->toArray(),
 

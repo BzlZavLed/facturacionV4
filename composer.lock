@@ -4,8 +4,54 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d7cd62d75da2fe2750e6922c465371c6",
+    "content-hash": "2e1cffde1878f2bd3a62324b52b50130",
     "packages": [
+        {
+            "name": "bacon/bacon-qr-code",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Bacon/BaconQrCode.git",
+                "reference": "0537ed27917f5ae26e5837ac4bfd837171d0b848"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Bacon/BaconQrCode/zipball/0537ed27917f5ae26e5837ac4bfd837171d0b848",
+                "reference": "0537ed27917f5ae26e5837ac4bfd837171d0b848",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "suggest": {
+                "ext-gd": "to generate QR code images"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "BaconQrCode": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-2-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Ben Scholzen 'DASPRiD'",
+                    "email": "mail@dasprids.de",
+                    "homepage": "http://www.dasprids.de",
+                    "role": "Developer"
+                }
+            ],
+            "description": "BaconQrCode is a QR code generator for PHP.",
+            "homepage": "https://github.com/Bacon/BaconQrCode",
+            "support": {
+                "issues": "https://github.com/Bacon/BaconQrCode/issues",
+                "source": "https://github.com/Bacon/BaconQrCode/tree/master"
+            },
+            "time": "2013-08-27T10:20:42+00:00"
+        },
         {
             "name": "brick/math",
             "version": "0.9.3",
@@ -65,6 +111,72 @@
                 }
             ],
             "time": "2021-08-15T20:50:18+00:00"
+        },
+        {
+            "name": "codedge/laravel-fpdf",
+            "version": "1.9.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/codedge/laravel-fpdf.git",
+                "reference": "11520c0fa31d285ac0d391b4ae619aa9e3dc3355"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/codedge/laravel-fpdf/zipball/11520c0fa31d285ac0d391b4ae619aa9e3dc3355",
+                "reference": "11520c0fa31d285ac0d391b4ae619aa9e3dc3355",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": "^7.0 || ^8.0 || ^9.0",
+                "php": "^7.4 || ^8.0 || ^8.1"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^6.24.1",
+                "phpunit/phpunit": "^9.5.21"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Fpdf": "Codedge\\Fpdf\\Facades\\Fpdf"
+                    },
+                    "providers": [
+                        "Codedge\\Fpdf\\FpdfServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Codedge\\Fpdf\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Holger Lösken",
+                    "email": "holger.loesken@codedge.de"
+                }
+            ],
+            "description": "Laravel package to include Fpdf. It ships with Fpdf 1.84.",
+            "keywords": [
+                "fpdf",
+                "laravel",
+                "pdf"
+            ],
+            "support": {
+                "issues": "https://github.com/codedge/laravel-fpdf/issues",
+                "source": "https://github.com/codedge/laravel-fpdf"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/codedge",
+                    "type": "github"
+                }
+            ],
+            "time": "2022-07-22T09:07:18+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -2894,6 +3006,44 @@
                 }
             ],
             "time": "2022-05-28T13:28:03+00:00"
+        },
+        {
+            "name": "simplesoftwareio/simple-qrcode",
+            "version": "0.0.4-beta",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/SimpleSoftwareIO/simple-qrcode.git",
+                "reference": "fa97493b3e17f25c254f532a4b3b277e6053f0fe"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/SimpleSoftwareIO/simple-qrcode/zipball/fa97493b3e17f25c254f532a4b3b277e6053f0fe",
+                "reference": "fa97493b3e17f25c254f532a4b3b277e6053f0fe",
+                "shasum": ""
+            },
+            "require": {
+                "bacon/bacon-qr-code": "1.0.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "0.9.*",
+                "phpunit/phpunit": "4.0.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SimpleSoftwareIO\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Simple QrCode is a QR code generator made for Laravel.",
+            "support": {
+                "issues": "https://github.com/SimpleSoftwareIO/simple-qrcode/issues",
+                "source": "https://github.com/SimpleSoftwareIO/simple-qrcode/tree/0.0.4-beta"
+            },
+            "time": "2014-06-18T00:52:55+00:00"
         },
         {
             "name": "symfony/console",
@@ -7903,7 +8053,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {
+        "simplesoftwareio/simple-qrcode": 10
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

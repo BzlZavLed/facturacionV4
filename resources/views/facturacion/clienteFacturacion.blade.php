@@ -5,18 +5,39 @@
         <div class="container">
             <h5>Facturación</h5>
             <div class="row">
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label for="fondos">Fondos</label>
+                        <select name="fondos" id="fondos" class="form-control">
+                            <option value="select" selected disabled>--Selecciona una opción</option>
+                            @if(is_null($fondos))
+                                <option value="0">No hay fondos</option>
+                            @else
+                            @foreach ($fondos as $item)
+                                <option value="{{ $item['fondo'] }}-{{ $item['bunit'] }}">
+                                    {{ $item['fondo'] }}-{{ $item['bunit'] }}
+                                </option>
+                            @endforeach
+                            @endif
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
                 <div class="col-sm-6">
                     <h5>Receptor (Cliente)</h5>
                     <form id="createClienteForm">
                         <div class="form-group">
-                            <label for="nombreCliente">Nombre del cliente(Buscar por)</label>
-                            <input list="nombreClienteList" id="nombreCliente" name="nombreCliente" class="form-control">
+                            <input list="nombreClienteList" id="nombreCliente" name="nombreCliente" class="form-control"
+                                placeholder="Nombre del cliente">
                             <datalist id="nombreClienteList">
                                 @foreach ($clientes as $item)
                                     <option value="{{ $item->nombreCliente }}" idElement="{{ $item->id }}"
                                         label="{{ $item->nombreCliente }} - {{ $item->rfcCliente }}">
                                 @endforeach
                             </datalist>
+                        </div>
+                        <div class="form-group">
                             <label for="razonCliente">Razón Social</label>
                             <input type="text" name="razonCliente" id="razonCliente" class="form-control" required>
 
@@ -26,7 +47,7 @@
                                 <span class="text-danger">{{ $errors->first('RFC') }}</span>
                             @endif
 
-                            <label for="emailCliente">Email (Buscar por)</label>
+                            <label for="emailCliente">Email</label>
                             <input list="emailClienteList" id="emailCliente" name="emailCliente" class="form-control">
                             <datalist id="emailClienteList">
                                 @foreach ($clientes as $item)
@@ -52,7 +73,14 @@
                             <label for="DomicilioFiscalReceptor">Domicilio fiscal receptor</label>
                             <input type="number" class="form-control" id="DomicilioFiscalReceptor"
                                 name="DomicilioFiscalReceptor">
-                            <br>
+
+                            <label for="RegimenFiscalReceptor">Regimen </label>
+                            <select id="RegimenFiscalReceptor" name="RegimenFiscalReceptor" class="form-control">
+                                @foreach ($regimenFiscal as $item)
+                                    <option value="{{ $item->clave }}">{{ $item->clave }} - {{ $item->descripcion }}
+                                    </option>
+                                @endforeach
+                            </select><br>
 
                             <button type="submit" class="btn btn-primary" id="guardarCliente">Guardar cliente</button>
                             <span class="text-success" id="success-message"> </span>
@@ -68,9 +96,11 @@
                             <select id="razonSocialEmisor" name="razonSocialEmisor" class="form-control">
                                 <option value="-" selected>--Seleccionar--</option>
                                 @foreach ($emisor as $item)
-                                    <option value="{{ $item->rfc_emisor }}" rfc_emisor="{{ $item->rfc_emisor }}"
-                                        regimen_emisor="{{ $item->regimen_emisor }}" c_postal="{{ $item->c_postal }}">
-                                        {{ $item->razon_emisor }} - {{ $item->rfc_emisor }}
+                                    <option value="{{ $item->rfc_emisor }}" 
+                                            rfc_emisor="{{ $item->rfc_emisor }}"
+                                            regimen_emisor="{{ $item->regimen_emisor }}" 
+                                            c_postal="{{ $item->c_postal }}">
+                                            {{ $item->razon_emisor }} - {{ $item->nombreColegio }}
                                     </option>
                                 @endforeach
                             </select><br>
@@ -96,8 +126,8 @@
                     <div class="col-sm-3">
                         <label for="datetimepicker">Fecha timbre</label>
                         <div class='input-group date' id='datetimepicker' style="display:flex">
-                            <input type='text' id="datetimepickerinput" name="datetimepickerinput" class="form-control"
-                                style="width: 50%" />
+                            <input type='text' id="datetimepickerinput" name="datetimepickerinput"
+                                class="form-control" style="width: 50%" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar" style="font-size: 9px;"></span>
                             </span>
@@ -179,6 +209,15 @@
                         @endforeach
                     </datalist>
                 </div>
+                <div class="col-sm-6">
+                    <label for="objImp">Objeto a impuestos </label>
+                    <select id="objImp" name="objImp" class="form-control">
+                        @foreach ($objImp as $item)
+                            <option value="{{ $item->clave }}">{{ $item->clave }} - {{ $item->descripcion }}
+                            </option>
+                        @endforeach
+                    </select><br>
+                </div>
             </div>
             <hr>
             <div class="row">
@@ -230,26 +269,17 @@
                         <input type="number" id="importeConcepto" name="importeConcepto" class="form-control">
 
                         <label for="descuentoConcepto">Descuento </label>
-                        <input type="number" id="descuento" name="descuento" class="form-control">
-
-                        <label for="objImp">Objeto a impuestos </label>
-                        <select id="objImp" name="objImp" class="form-control">
-                            @foreach ($objImp as $item)
-                                <option value="{{ $item->clave }}">{{ $item->clave }} - {{ $item->descripcion }}
-                                </option>
-                            @endforeach
-                        </select><br>
-
+                        <input type="number" id="descuento" name="descuento" class="form-control"><br>
                     </div>
                     <div class="row">
-                        <div class="col-sm-4 offset-md-10">
+                        <div class="col-sm-4">
                             <button type="submit" class="btn btn-primary" id="addConcept"><i
                                     class="fa-solid fa-circle-plus"></i>
                                 Concepto</button>
                         </div>
                     </div>
                 </form>
-                <div id="impuestos" class="row" style="display: none">
+                {{-- <div id="impuestos" class="row" style="display: none">
                     <label>Impuestos</label>
                     <form id="desgloseImpuestos" name="desgloseImpuestos">
                         <div class="col-sm-2">
@@ -293,7 +323,7 @@
                             </div>
                         </div>
                     </form>
-                </div>
+                </div> --}}
             </div>
             <div class="row">
                 <div class="col-sm-12">
@@ -310,7 +340,7 @@
                                     <th>ValorUnitario</th>
                                     <th>Importe</th>
                                     <th>Descuento</th>
-                                    <th>ObjetoImpuestos</th>
+                                    {{-- <th>ObjetoImpuestos</th> --}}
                                     <th>Acción</th>
                                 </tr>
                             </thead>
@@ -318,7 +348,7 @@
                         </table>
                     </div>
                 </div>
-                <div class="col-sm-12" id="impuestosTable" style="display: none">
+                {{-- <div class="col-sm-12" id="impuestosTable" style="display: none">
                     <div class="table-responsive">
                         <table class="table table-hover" id="impuestosTabla">
                             <thead>
@@ -334,7 +364,7 @@
                             <tbody></tbody>
                         </table>
                     </div>
-                </div>
+                </div> --}}
                 <div class="col-sm-3 offset-md-9">
                     <div class="table-responsive">
                         <table class="table table-hover" id="impuestosTable">
@@ -362,45 +392,157 @@
             </div>
             <hr>
             <div class="row">
-                <div class="col-sm-4">
-                    <h5>Addenda</h5>
+                <div class="col-sm-3">
+                    <label>Addenda</label>
                     <select name="tipoAddenda" id="tipoAddenda" class="form-control">
+                        <option value="select" selected disabled>--Selecciona una opción--</option>
                         <option value="educativa">Colegiaturas</option>
                         <option value="ventas">Ventas</option>
                         <option value="donativos">Donativos</option>
                     </select>
                 </div>
+                <div id="colegiaturaAddenda" style="display: none" class="col-sm-9">
+                    <div class="col-sm-4">
+                        <div class="form-group">
+                            <label for="alumnoaddenda">Alumno</label>
+                            <input type="text" class="form-control" id="alumnoaddenda" list="listAddendas">
+                            <datalist id="listAddendas">
+                            </datalist>
+                        </div>
+                        <div>
+                            <input type="button" name="addAddendaColegiatura" id="addAddendaColegiatura"
+                                class="btn btn-default" value="Agregar">
+                        </div>
+
+                    </div>
+                </div>
             </div><br><br>
+            <div class="row" style="display: none" id="tableaddendadiv">
+                <div class="col-sm-12">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="addendasTableColegiatura">
+                            <thead>
+                                <tr>
+                                    <th>Curp</th>
+                                    <th>RVOE</th>
+                                    <th>Nivel</th>
+                                    <th>Alumno</th>
+                                    <th>RFC</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-sm-6">
                     <button class="btn btn-success" id="btnGenerarXml">Timbrar</button>
                 </div>
             </div>
+            <div class="row" id="descargables" style="display: none">
+                <a href="" id="descargarXml" class = 'btn btn-default' target="_blank" download>Descargar XML</a>
+                <a href="" id="descargarPdf" class = 'btn btn-secondary' target="_blank" download>Descargar PDF</a>
+            </div>
+        </div>
+        <div class="lds-dual-ring">
+            <!-- Place at bottom of page -->
         </div>
     </main>
     {{-- Searchable functions for elements in client forms --}}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script type="text/javascript" src="{{ asset('js/tools.js') }}"></script>
     <script>
-        $("#nombreCliente").on('input', function() {
-            var clientes = {!! json_encode($clientes->toArray(), JSON_HEX_TAG) !!};
+        var clientes = {!! json_encode($clientes->toArray(), JSON_HEX_TAG) !!};
+        setCookie("bunit",@json(Auth::user()->bunit_account),2);
+        
+        /**
+         * Get json from SEAWEBSERVICE for colegiaturas addendas
+         */
+        $("#fondos").on("change", function(event) {
+            var fondoData = $(this).val();
+            if (fondoData) {
+                var data = fondoData.split("-");
+                var fondo = data[0];
+                var bunit = data[1];
+                event.preventDefault();
+                clearForm("createClienteForm");
+                $.ajaxSetup({
+                    headers: {
+                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    },
+                });
+                $.ajax({
+                    url: "http://200.188.154.68:8086/BlueSystem/db/consultas/wsAddenda.php",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        bunit: bunit,
+                        fondo: fondo,
+                        id_proc: "clientes"
+                    },
+                    success: function(response) {
+                        console.log("newSetOfClients "+bunit);
+                        response.forEach(element => {
+                            var newElement = {};
+                            newElement.id = parseInt(element.ID);
+                            newElement.nombreCliente = element.Nombre != false ? element.Nombre
+                                .replace(/['"]+/g, '') : "";
+                            newElement.razonCliente = element.Razon != false ? element.Razon
+                                .replace(/['"]+/g, '') : "";
+                            newElement.rfcCliente = element.RFC.slice(1,3).toUpperCase() == "XX" || element.RFC.slice(1,3).toUpperCase() == "XA" ? "XAXX010101000":element.RFC.replace(/['"]+/g, '').toUpperCase();
+                            newElement.emailCliente = element.EmailFact.replace(/['"]+/g,
+                                '');
+                            newElement.DomicilioFiscalReceptor = element
+                                .DomicilioFiscalReceptor;
+                            newElement.personaFisicaCliente = "";
+                            newElement.bunit = bunit;
+                            newElement.usoCfdiCliente = "";
+                            newElement.RegimenFiscalReceptor = element
+                                .RegimenFiscalReceptor;
+                            clientes.push(newElement);
 
+
+                        });
+                        $("#nombreClienteList").html("");
+                        var options = "";
+                        clientes.forEach(element => {
+                            options += "<option value='" + element.nombreCliente +
+                                "' idElement='" + element.id + "'>" + element.razonCliente +
+                                "-" + element.rfcCliente + "</option>";
+                        });
+                        $("#nombreClienteList").html(options);
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+
+
+            }
+        });
+
+        $("#nombreCliente").on('input', function() {
             var datavalue = $('#nombreClienteList').find('option[value="' + $(this).val() + '"]').attr('idElement');
             var result = $.grep(clientes, function(e) {
                 return e.id == datavalue;
             });
             var conceptosForma = document.forms['createClienteForm'];
             var index = 0;
+            if (result.length > 0) {
+                $.each(conceptosForma, function() {
+                    var nameElement = conceptosForma.elements[index].name;
+                    conceptosForma.elements[index].value = result[0][nameElement];
+                    index++;
+                });
+            }
 
-            $.each(conceptosForma, function() {
-                var nameElement = conceptosForma.elements[index].name;
-
-                conceptosForma.elements[index].value = result[0][nameElement];
-                index++;
-            });
-            $("#guardarCliente").hide();
+            //$("#guardarCliente").hide();
 
         })
-
+        /*Opcion de buscar por email DESHABILITADA
         $("#emailCliente").on('input', function() {
             var clientes = {!! json_encode($clientes->toArray(), JSON_HEX_TAG) !!};
             var datavalue = $('#emailClienteList').find('option[value="' + $(this).val() + '"]').attr('idElement');
@@ -415,8 +557,8 @@
                 conceptosForma.elements[index].value = result[0][nameElement];
                 index++;
             });
-            $("#guardarCliente").hide();
-        })
+            //$("#guardarCliente").hide();
+        })*/
 
         $("#conceptoFacturacion").on('input', function() {
             var conceptos = {!! json_encode($concepto_internos->toArray(), JSON_HEX_TAG) !!};

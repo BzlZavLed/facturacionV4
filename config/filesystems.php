@@ -29,6 +29,24 @@ return [
     */
 
     'disks' => [
+        'img' => [
+            'driver' => 'local',
+            'root'   => public_path('/img'),
+            'url' => env('APP_URL').'/img',
+            'visibility' => 'public'
+        ],
+        'xml' => [
+            'driver' => 'local',
+            'root'   => public_path('/xml'),
+            'url' => env('APP_URL').'/xml',
+            'visibility' => 'public'
+        ],
+        'pdf' => [
+            'driver' => 'local',
+            'root'   => public_path('/pdf'),
+            'url' => env('APP_URL').'/pdf',
+            'visibility' => 'public'
+        ],
         'tmp' => [
             'driver' => 'local',
             'root'   => public_path('/certificados'),
@@ -75,6 +93,9 @@ return [
 
     'links' => [
         public_path('storage') => storage_path('app/public'),
+        public_path('storage/xml') => storage_path('app/xml'),
+        public_path('storage/img') => storage_path('app/img'),
+        public_path('storage/pdf') => storage_path('app/pdf')
     ],
 
 ];

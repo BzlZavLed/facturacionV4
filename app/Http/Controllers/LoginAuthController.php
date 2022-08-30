@@ -94,6 +94,6 @@ class LoginAuthController extends Controller
     public function signOut() {
         Session::flush();
         Auth::logout();
-        
+        return redirect()->route('/');
     }
 }

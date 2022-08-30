@@ -9,12 +9,21 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
 
 class ViewsController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth');
+    }
+    /**get Clientes from local db */
+    public function getClientes(Request $request)
+
+    {
+        $clientes = DB::Table('clientes')->where('bunit', $request->bunit)->get();
+        return $clientes;
     }
     /**
      * Vista facturacion general
@@ -52,13 +61,31 @@ class ViewsController extends Controller
             ->get();
         $concepto_internos = DB::Table('concepto_internos')
             ->get();
+
+        $regimenFiscal = DB::Table('regimenfiscal_catalogo')
+            ->where('estado', 1)
+            ->get();
+
         $user = Auth::user();
         $clientes = DB::Table('clientes')->where('bunit', $user->bunit_account)->get();
 
-        $emisor = DB::Table('emisor')->where('zona', $user->zona)->get();
-
+        $emisor = DB::Table('emisor')->where('bunit', $user->bunit_account)->get();
+        
         $fecha_timbre = Carbon::now()->toDateTimeString();
+
+        $response = Http::post('http://200.188.154.68:8086/BlueSystem/db/consultas/wsAddenda.php', [
+            'bunit' => $user->bunit_account,
+            'email' => $user->email,
+            'id_proc' => "getFondos"
+        ]);
+        $fondos = $response->json();
+        //error_log($response);
+        //dd($response);
+
+
         return view('facturacion.clienteFacturacion', [
+            'regimenFiscal' => $regimenFiscal,
+            'fondos' => $fondos,
             'usoCfdi' => $usoCfdi,
             'formaPago' => $formaPago,
             'tipoComprobante' => $tipoComprobante,
@@ -214,7 +241,7 @@ class ViewsController extends Controller
     {
         $user = Auth::user();
         $bunit = $user->bunit_account;
-
+        DB::enableQueryLog(); // Enable query log
         if ($bunit != 'S18') {
             $emisor = Emisor::leftJoin('files', 'emisor.rfc_emisor', '=', 'files.rfc')
                 ->where('emisor.bunit', $user->bunit_account)
@@ -226,7 +253,7 @@ class ViewsController extends Controller
         $regimenFiscal = DB::Table('regimenfiscal_catalogo')
             ->where('estado', 1)
             ->get();
-
+        //dd(DB::getQueryLog());
         return view('facturacion.configuracion.emisor')->with(compact('emisor', 'regimenFiscal'));
     }
     /**
@@ -264,15 +291,15 @@ class ViewsController extends Controller
                 ->paginate(20);
         } else {
             $concepto_internos =  DB::Table('concepto_internos')
-                ->select('id', 'claveProductoServicio', 'descripcionConcepto', 'cuentasContables','claveUnidadFacturacion','numeroIdent')
+                ->select('id', 'claveProductoServicio', 'descripcionConcepto', 'cuentasContables', 'claveUnidadFacturacion', 'numeroIdent')
                 ->paginate(20);
         }
-       // return view('facturacion.configuracion.formaPago')->with('formaPago', $formaPago)->with('filter', $filter);
+        // return view('facturacion.configuracion.formaPago')->with('formaPago', $formaPago)->with('filter', $filter);
         return view('facturacion.configuracion.conceptosInternos', [
             'claveProdServ' => $claveProdServ,
             'claveunidad' => $claveunidad,
-            'concepto_internos'=> $concepto_internos,
-            'filter'=> $filter
+            'concepto_internos' => $concepto_internos,
+            'filter' => $filter
         ]);
     }
 }
