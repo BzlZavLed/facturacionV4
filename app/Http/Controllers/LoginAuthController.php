@@ -45,7 +45,7 @@ class LoginAuthController extends Controller
                         ->withSuccess('Signed in');
         }
    
-        return redirect("/login")->withSuccess('Login details are not valid');
+        return redirect("/loginBlue")->withSuccess('Login details are not valid');
     }
  
  
