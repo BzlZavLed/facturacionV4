@@ -18,7 +18,7 @@ class LoginAuthController extends Controller
     public function loginBlue (Request $request)
     {
         $pass = $request->password;
-        $email = $request->email;
+        $email = $request->email; 
 
         $user = User::where([
             ['email', '=', $email],
@@ -45,7 +45,7 @@ class LoginAuthController extends Controller
                         ->withSuccess('Signed in');
         }
    
-        return redirect("auth.login")->withSuccess('Login details are not valid');
+        return redirect("/login")->withSuccess('Login details are not valid');
     }
  
  
