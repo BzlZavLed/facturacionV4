@@ -443,6 +443,8 @@
                 </div>
             </div>
             <div class="row" id="descargables" style="display: none">
+                <br><br>
+                <label for="descargables">Descargables</label>
                 <a href="" id="descargarXml" class = 'btn btn-default' target="_blank" download>Descargar XML</a>
                 <a href="" id="descargarPdf" class = 'btn btn-secondary' target="_blank" download>Descargar PDF</a>
             </div>

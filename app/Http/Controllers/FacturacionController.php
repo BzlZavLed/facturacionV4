@@ -15,44 +15,43 @@ use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 use Codedge\Fpdf\Fpdf\Fpdf;
-use \QrCode;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use \NumberFormatter;
 
 class PDF extends Fpdf
+{
+    // Page header
+    public function Header()
     {
-        // Page header
-        public function Header()
-        {
-            // Logo
-            $this->Image('storage/img/logo.png', 5, 10, 30);
-            $this->SetFont('Arial', 'B', 13);
-            // Move to the right
-            $this->Cell(60);
-            // Title
+        // Logo
+        $this->Image('storage/img/logo.png', 5, 10, 30);
+        $this->SetFont('Arial', 'B', 13);
+        // Move to the right
+        $this->Cell(60);
+        // Title
 
-            // Line break
-            $this->Ln(20);
-        }
-
-        // Page footer
-        public function Footer()
-        {
-            // Position at 1.5 cm from bottom
-            $this->SetY(-15);
-            // Arial italic 8
-            $this->SetFont('Arial', 'I', 8);
-            // Page number
-            $this->Cell(0, 10, 'Pagina ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
-        }
+        // Line break
+        $this->Ln(20);
     }
+
+    // Page footer
+    public function Footer()
+    {
+        // Position at 1.5 cm from bottom
+        $this->SetY(-15);
+        // Arial italic 8
+        $this->SetFont('Arial', 'I', 8);
+        // Page number
+        $this->Cell(0, 10, 'Pagina ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
+    }
+}
 class FacturacionController extends Controller
-{   
+{
     public $pdf;
     public function __construct()
     {
         $this->middleware('auth');
         $this->pdf = new PDF;
-        
     }
 
     public function borrarCliente($id)
@@ -111,10 +110,17 @@ class FacturacionController extends Controller
             $document->createElement('cfdi:Comprobante')
         );
 
-        $comprobante->setAttribute('xmlns:cfdi', "http://www.sat.gob.mx/cfd/4");
-        $comprobante->setAttribute('xmlns:xsi', "http://www.w3.org/2001/XMLSchema-instance");
-        $comprobante->setAttribute('xsi:schemaLocation', "http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd http://www.sat.gob.mx/iedu http://www.sat.gob.mx/sitio_internet/cfd/iedu/iedu.xsd");
-        $comprobante->setAttribute('xmlns:iedu', "http://www.sat.gob.mx/iedu");
+        if ($request->cuerpo['addendaType'] == 'donativos') {
+            $comprobante->setAttribute('xmlns:cfdi', "http://www.sat.gob.mx/cfd/4");
+            $comprobante->setAttribute('xmlns:xsi', "http://www.w3.org/2001/XMLSchema-instance");
+            $comprobante->setAttribute('xsi:schemaLocation', "http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd http://www.sat.gob.mx/donat http://www.sat.gob.mx/sitio_internet/cfd/donat/donat11.xsd");
+            $comprobante->setAttribute('xmlns:donat', "http://www.sat.gob.mx/donat");
+        } else {
+            $comprobante->setAttribute('xmlns:cfdi', "http://www.sat.gob.mx/cfd/4");
+            $comprobante->setAttribute('xmlns:xsi', "http://www.w3.org/2001/XMLSchema-instance");
+            $comprobante->setAttribute('xsi:schemaLocation', "http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd http://www.sat.gob.mx/iedu http://www.sat.gob.mx/sitio_internet/cfd/iedu/iedu.xsd");
+            $comprobante->setAttribute('xmlns:iedu', "http://www.sat.gob.mx/iedu");
+        }
 
         $comprobante->setAttribute('Version', '4.0');
         $comprobante->setAttribute('Serie', $serie);
@@ -250,7 +256,7 @@ class FacturacionController extends Controller
                 $document->createElement('donat:Donatarias')
             );
 
-            $donataria->setAttribute('version', $emisorDB->versionDonataria);
+            $donataria->setAttribute('version','1.1');
             $donataria->setAttribute('noAutorizacion', $emisorDB->permisoDonataria);
             $donataria->setAttribute('fechaAutorizacion', $emisorDB->fechaDonataria);
             $donataria->setAttribute('leyenda', $emisorDB->leyendaDonataria);
@@ -282,7 +288,7 @@ class FacturacionController extends Controller
         $result = json_decode($result, true);
 
         if ($result['status'] == 'error') {
-            return $result;
+            return json_encode(array('response' => $result, 'xml' => $xml_data));
         }
         $uuid = $result['data']['uuid'];
         $cfdi = $result['data']['cfdi'];
@@ -298,12 +304,13 @@ class FacturacionController extends Controller
         $direccionResponse = $dir->json();
         $direccion = $direccionResponse['direccion'];
         /**CREAR PDF */
-        $this->pdf = $this->processXmlForPdfIEDU($cfdi,$complem,$cadena,$direccion);
+        $tipoFactura = $request->cuerpo['addendaType'];
+        $this->pdf = $this->processXmlForPdfIEDU($cfdi, $complem, $cadena, $direccion, $tipoFactura);
         $pdf = $this->pdf->Output('S');
         Storage::disk('pdf')->put($uuid . '.pdf', $pdf);
-        
-        $urlXml = asset('xml/'.$uuid.'.xml');
-        $urlPdf = asset('pdf/'.$uuid.'.pdf');
+
+        $urlXml = asset('xml/' . $uuid . '.xml');
+        $urlPdf = asset('pdf/' . $uuid . '.pdf');
         Facturas::updateOrCreate(
             ['uuid' => $result['data']['uuid']],
             [
@@ -322,21 +329,33 @@ class FacturacionController extends Controller
             ]
         );
 
-        return json_encode(array("xml" => $urlXml,"pdf" => $urlPdf),JSON_UNESCAPED_SLASHES);
-        
+        return json_encode(array("xml" => $urlXml, "pdf" => $urlPdf), JSON_UNESCAPED_SLASHES);
     }
     /**
      * PROCCESS XML de factura PARA GENERAR PDF
      */
-    public function processXmlForPdfIEDU($string,$complem,$cadena,$direccion)
+    public function processXmlForPdfIEDU($string, $complem, $cadena, $direccion, $tipoFactura)
     {
         $xml = simplexml_load_string($string);
         $ns = $xml->getNamespaces(true);
         $xml->registerXPathNamespace('c', $ns['cfdi']);
         $xml->registerXPathNamespace('t', $ns['tfd']);
-        $xml->registerXPathNamespace('i', $ns['iedu']);
-
-        //EMPIEZO A LEER LA INFORMACION DEL CFDI E IMPRIMIRLA
+        $versioncomplem = '';
+        $noAutorizacioncomplem = '';
+        $fechaAutorizacioncomplem = '';
+        $leyenda = '';
+        if ($tipoFactura == "educativa") {
+            $xml->registerXPathNamespace('i', $ns['iedu']);
+        } else if ($tipoFactura == 'donativos') {
+            $xml->registerXPathNamespace('d', $ns['donat']);
+            foreach ($xml->xpath('//cfdi:Comprobante//cfdi:Complemento//donat:Donatarias') as $Concepto) {
+                $versioncomplem = $Concepto['version'];
+                $noAutorizacioncomplem = $Concepto['noAutorizacion'];
+                $fechaAutorizacioncomplem = $Concepto['fechaAutorizacion'];
+                $leyenda = $Concepto['leyenda'];
+            }
+        }
+        
         foreach ($xml->xpath('//cfdi:Comprobante') as $cfdiComprobante) {
             $version = $cfdiComprobante['Version'];
             $fecha = $cfdiComprobante['Fecha'];
@@ -377,7 +396,6 @@ class FacturacionController extends Controller
             $recUso = $Receptor['UsoCFDI'];
             $domFiscal = $Receptor['DomicilioFiscalReceptor'];
             $regFiscal = $Receptor['RegimenFiscalReceptor'];
-
         }
 
         foreach ($xml->xpath('//t:TimbreFiscalDigital') as $tfd) {
@@ -441,317 +459,344 @@ class FacturacionController extends Controller
             $correoCFDI = "fenacsonora@gmail.com";
         }
 
-        $attachment = $this->crearPdf($sello,$total,$subtotal,$formaPago,$noCert,$tipoComp,$lugar
-        ,$metodoPago,$folio,$serie,$moneda,$rfcemisor,$nomEmisor,$regFiscEmisor,$rfcReceptor,$recNombre,$recUso,$domFiscal
-        ,$regFiscal,$versionTimbre,$selloCFD,$selloSAT,$fechaTimbre,$uuid,$certificadoSAT,$sellosat,$rfcProvCertif,$telefono
-        ,$web,$correoCFDI,$uuidRelacionado,$tipoRelacion,$xml,$complem,$cadena,$direccion);
+        $attachment = $this->crearPdf(
+            $sello,
+            $total,
+            $subtotal,
+            $formaPago,
+            $noCert,
+            $tipoComp,
+            $lugar,
+            $metodoPago,
+            $folio,
+            $serie,
+            $moneda,
+            $rfcemisor,
+            $nomEmisor,
+            $regFiscEmisor,
+            $rfcReceptor,
+            $recNombre,
+            $recUso,
+            $domFiscal,
+            $regFiscal,
+            $versionTimbre,
+            $selloCFD,
+            $selloSAT,
+            $fechaTimbre,
+            $uuid,
+            $certificadoSAT,
+            $sellosat,
+            $rfcProvCertif,
+            $telefono,
+            $web,
+            $correoCFDI,
+            $uuidRelacionado,
+            $tipoRelacion,
+            $xml,
+            $complem,
+            $cadena,
+            $direccion,
+            $tipoFactura,
+            $versioncomplem,
+            $noAutorizacioncomplem,
+            $fechaAutorizacioncomplem,
+            $leyenda
+        );
 
-        
-        
+
+
         return $attachment;
     }
     /**
      * Generar PDF
      */
-    public function crearPdf($sello,$total,$subtotal,$formaPago,$noCert,$tipoComp,$lugar
-    ,$metodoPago,$folio,$serie,$moneda,$rfcemisor,$nomEmisor,$regFiscEmisor,$rfcReceptor,$recNombre,$recUso,$domFiscal
-    ,$regFiscal,$versionTimbre,$selloCFD,$selloSAT,$fechaTimbre,$uuid,$certificadoSAT,$sellosat,$rfcProvCertif,$telefono
-    ,$web,$correoCFDI,$uuidRelacionado,$tipoRelacion,$xml,$complem,$cadena,$direccion){
+    public function crearPdf(
+        $sello,
+        $total,
+        $subtotal,
+        $formaPago,
+        $noCert,
+        $tipoComp,
+        $lugar,
+        $metodoPago,
+        $folio,
+        $serie,
+        $moneda,
+        $rfcemisor,
+        $nomEmisor,
+        $regFiscEmisor,
+        $rfcReceptor,
+        $recNombre,
+        $recUso,
+        $domFiscal,
+        $regFiscal,
+        $versionTimbre,
+        $selloCFD,
+        $selloSAT,
+        $fechaTimbre,
+        $uuid,
+        $certificadoSAT,
+        $sellosat,
+        $rfcProvCertif,
+        $telefono,
+        $web,
+        $correoCFDI,
+        $uuidRelacionado,
+        $tipoRelacion,
+        $xml,
+        $complem,
+        $cadena,
+        $direccion,
+        $tipoFactura,
+        $versioncomplem,
+        $noAutorizacioncomplem,
+        $fechaAutorizacioncomplem,
+        $leyenda
+    ) {
 
         
+        $this->pdf->AddPage();
+        $this->pdf->AliasNbPages();
+        $this->pdf->SetFont('Arial', 'B', 10);
+        $this->pdf->SetXY(60.0, 15.0);
+        $this->pdf->Cell(80, 4, iconv('UTF-8', 'iso-8859-1', $rfcemisor), 0, 1, 'C');
+        $this->pdf->SetXY(60.0, 19.0);
+        $this->pdf->Cell(80, 4, iconv('UTF-8', 'iso-8859-1', $nomEmisor), 0, 1, 'C');
+        $this->pdf->SetXY(60.0, 23.0);
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->Cell(80, 4, iconv('UTF-8', 'iso-8859-1', $direccion), 0, 1, 'C'); //get direccion from DB o webService
+        $this->pdf->SetXY(60.0, 27.0);
+        $this->pdf->Cell(80, 4, $telefono, 0, 1, 'C');
+        $this->pdf->SetXY(60.0, 31.0);
+        $this->pdf->Cell(80, 4, $web, 0, 1, 'C');
+        $this->pdf->SetXY(60.0, 35.0);
+        $this->pdf->Cell(80, 4, $correoCFDI, 0, 1, 'C');
 
-            $this->pdf->AddPage();
-            $this->pdf->AliasNbPages();
-            $this->pdf->SetFont('Arial', 'B', 10);
-            $this->pdf->SetXY(60.0, 15.0);
-            $this->pdf->Cell(80, 4, iconv('UTF-8', 'iso-8859-1', $rfcemisor), 0, 1, 'C');
-            $this->pdf->SetXY(60.0, 19.0);
-            $this->pdf->Cell(80, 4, iconv('UTF-8', 'iso-8859-1', $nomEmisor), 0, 1, 'C');
-            $this->pdf->SetXY(60.0, 23.0);
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->Cell(80, 4, iconv('UTF-8', 'iso-8859-1', $direccion), 0, 1, 'C'); //get direccion from DB o webService
-            $this->pdf->SetXY(60.0, 27.0);
-            $this->pdf->Cell(80, 4, $telefono, 0, 1, 'C');
-            $this->pdf->SetXY(60.0, 31.0);
-            $this->pdf->Cell(80, 4, $web, 0, 1, 'C');
-            $this->pdf->SetXY(60.0, 35.0);
-            $this->pdf->Cell(80, 4, $correoCFDI, 0, 1, 'C');
+        $this->pdf->SetXY(10.0, 45.0);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(30, 4, 'UUID', 1, 1, 'L', 1);
 
-            $this->pdf->SetXY(10.0, 45.0);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(30, 4, 'UUID', 1, 1, 'L', 1);
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(40.0, 45.0);
+        $this->pdf->Cell(80, 4, $uuid, 1, 1, 'L');
 
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(40.0, 45.0);
-            $this->pdf->Cell(80, 4, $uuid, 1, 1, 'L');
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(10.0, 49.0);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'Fecha emisión'), 1, 1, 'L', 1);
 
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(10.0, 49.0);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'Fecha emisión'), 1, 1, 'L', 1);
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(40.0, 49.0);
+        $this->pdf->Cell(80, 4, $fechaTimbre, 1, 1, 'L');
 
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(40.0, 49.0);
-            $this->pdf->Cell(80, 4, $fechaTimbre, 1, 1, 'L');
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(10.0, 53.0);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'Lugar expedición'), 1, 1, 'L', 1);
 
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(10.0, 53.0);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'Lugar expedición'), 1, 1, 'L', 1);
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(40.0, 53.0);
+        $this->pdf->Cell(80, 4, $lugar, 1, 1, 'L');
 
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(40.0, 53.0);
-            $this->pdf->Cell(80, 4, $lugar, 1, 1, 'L');
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(10.0, 57.0);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'Metodo de pago'), 1, 1, 'L', 1);
 
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(10.0, 57.0);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'Metodo de pago'), 1, 1, 'L', 1);
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(40.0, 57.0);
+        $this->pdf->Cell(80, 4, $metodoPago, 1, 1, 'L'); //subcolumna izquierda
 
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(40.0, 57.0);
-            $this->pdf->Cell(80, 4, $metodoPago, 1, 1, 'L'); //subcolumna izquierda
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(120.0, 45.0);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(35, 4, iconv('UTF-8', 'iso-8859-1', 'Folio expedición'), 1, 1, 'L', 1);
 
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(120.0, 45.0);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(35, 4, iconv('UTF-8', 'iso-8859-1', 'Folio expedición'), 1, 1, 'L', 1);
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(155.0, 45.0);
+        $this->pdf->Cell(40, 4, $folio, 1, 1, 'L');
 
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(155.0, 45.0);
-            $this->pdf->Cell(40, 4, $folio, 1, 1, 'L');
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(120.0, 49.0);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(35, 4, iconv('UTF-8', 'iso-8859-1', 'Forma de pago'), 1, 1, 'L', 1);
 
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(120.0, 49.0);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(35, 4, iconv('UTF-8', 'iso-8859-1', 'Forma de pago'), 1, 1, 'L', 1);
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(155.0, 49.0);
+        $this->pdf->Cell(40, 4, iconv('UTF-8', 'iso-8859-1', $formaPago), 1, 1, 'L');
 
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(155.0, 49.0);
-            $this->pdf->Cell(40, 4, iconv('UTF-8', 'iso-8859-1', $formaPago), 1, 1, 'L');
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(120.0, 53.0);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(35, 4, iconv('UTF-8', 'iso-8859-1', 'Tipo de Comprobante'), 1, 1, 'L', 1);
 
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(120.0, 53.0);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(35, 4, iconv('UTF-8', 'iso-8859-1', 'Tipo de Comprobante'), 1, 1, 'L', 1);
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(155.0, 53.0);
+        $this->pdf->Cell(40, 4, $tipoComp, 1, 1, 'L');
 
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(155.0, 53.0);
-            $this->pdf->Cell(40, 4, $tipoComp, 1, 1, 'L');
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(120.0, 57.0);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(35, 4, iconv('UTF-8', 'iso-8859-1', 'Serie'), 1, 1, 'L', 1);
 
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(120.0, 57.0);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(35, 4, iconv('UTF-8', 'iso-8859-1', 'Serie'), 1, 1, 'L', 1);
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(155.0, 57.0);
+        $this->pdf->Cell(40, 4, $serie, 1, 1, 'L');
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(120.0, 61.0);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(35, 4, iconv('UTF-8', 'iso-8859-1', 'Moneda'), 1, 1, 'L', 1);
 
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(155.0, 57.0);
-            $this->pdf->Cell(40, 4, $serie, 1, 1, 'L');
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(120.0, 61.0);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(35, 4, iconv('UTF-8', 'iso-8859-1', 'Moneda'), 1, 1, 'L', 1);
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(155.0, 61.0);
+        $this->pdf->Cell(40, 4, $moneda, 1, 1, 'L'); //ACA TERMINA LA PRIMER LINA DE LA FACTURA
 
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(155.0, 61.0);
-            $this->pdf->Cell(40, 4, $moneda, 1, 1, 'L'); //ACA TERMINA LA PRIMER LINA DE LA FACTURA
+        $this->pdf->SetFont('Arial', 'B', 8); //EMISOR 2.0
+        $this->pdf->SetXY(10.0, 67.0);
+        $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'EMISOR'), 0, 1, 'L', 0);
 
-            $this->pdf->SetFont('Arial', 'B', 8); //EMISOR 2.0
-            $this->pdf->SetXY(10.0, 67.0);
-            $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'EMISOR'), 0, 1, 'L', 0);
+        $this->pdf->SetFont('Arial', '', 7);
+        $this->pdf->SetXY(35.0, 73.0);
+        $this->pdf->SetFillColor(255, 255, 255); //grey color
+        $this->pdf->MultiCell(70, 4, iconv('UTF-8', 'iso-8859-1', $nomEmisor), 1, 1, 'L', 0);
+        $ynueva1 = $this->pdf->GetY();
+        $this->pdf->SetX(35);
+        $this->pdf->Cell(70, 4, iconv('UTF-8', 'iso-8859-1', $rfcemisor), 1, 2, 'L');
+        $this->pdf->Cell(70, 4, iconv('UTF-8', 'iso-8859-1', $regFiscEmisor), 1, 2, 'L');
 
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(10.0, 73.0);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'Razón Social'), 1, 1, 'L', 1);
+        $this->pdf->SetXY(10, $ynueva1);
+        $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'RFC'), 1, 1, 'L', 1);
+        $this->pdf->SetXY(10, $ynueva1 + 4);
+        $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'Regimen Fiscal'), 1, 1, 'L', 1);
+
+        $this->pdf->SetFont('Arial', 'B', 8); //RECEPTOR
+        $this->pdf->SetXY(108.0, 67.0);
+        $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'Receptor'), 0, 1, 'L', 0);
+
+        $this->pdf->SetFont('Arial', '', 7);
+        $this->pdf->SetXY(133.0, 73.0);
+        $this->pdf->SetFillColor(255, 255, 255); //grey color
+        $this->pdf->MultiCell(62, 4, iconv('UTF-8', 'iso-8859-1', $recNombre), 1, 1, 'L', 0);
+        $ynueva2 = $this->pdf->GetY();
+        $this->pdf->SetX(133);
+        $this->pdf->Cell(62, 4, $rfcReceptor, 1, 2, 'L');
+        $this->pdf->Cell(62, 4, $recUso, 1, 2, 'L');
+        $this->pdf->Cell(62, 4, $domFiscal, 1, 2, 'L');
+        $this->pdf->Cell(62, 4, $regFiscal, 1, 2, 'L');
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(108.0, 73.0);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'Razón Social'), 1, 1, 'L', 1);
+        $this->pdf->SetXY(108, $ynueva2);
+        $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'RFC'), 1, 1, 'L', 1);
+        $this->pdf->SetXY(108, $ynueva2 + 4);
+        $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'Uso CFDI'), 1, 1, 'L', 1);
+        $this->pdf->SetXY(108, $ynueva2 + 8);
+        $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'Domicilio Fiscal'), 1, 1, 'L', 1);
+        $this->pdf->SetXY(108, $ynueva2 + 12);
+        $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'Regimen Fiscal'), 1, 1, 'L', 1);
+
+
+
+        $this->pdf->SetFont('Arial', 'B', 8); //Conceptos
+        $this->pdf->SetXY(10.0, 88.00);
+        $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'Conceptos'), 0, 1, 'L', 0);
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(10.0, 94);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', '#'), 1, 1, 'L', 1);
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(15.0, 94);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(15, 4, iconv('UTF-8', 'iso-8859-1', 'Cantidad'), 1, 1, 'L', 1);
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(30.0, 94);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'ClavProdServ'), 1, 1, 'L', 1);
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(50.0, 94);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'ClaveUnidad'), 1, 1, 'L', 1);
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(70.0, 94);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(55, 4, iconv('UTF-8', 'iso-8859-1', 'Descripción'), 1, 1, 'L', 1);
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(125.0, 94);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'NoIdentificacion'), 1, 1, 'L', 1);
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(150.0, 94);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'Valor unitario'), 1, 1, 'L', 1);
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(170.0, 94);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(15, 4, iconv('UTF-8', 'iso-8859-1', ' Importe'), 1, 1, 'L', 1);
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(170.0, 94);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(15, 4, iconv('UTF-8', 'iso-8859-1', ' Importe'), 1, 1, 'L', 1);
+
+        $x = 10.00;
+        $y = 98.00;
+        $importes = array();
+        $in1 = 1;
+
+        foreach ($xml->xpath('//cfdi:Comprobante//cfdi:Conceptos//cfdi:Concepto') as $Concepto) {
+            $conceptoFact = $Concepto['Unidad'];
+            $conceptoImporte = $Concepto['Importe'];
+            $conceptoCantidad = $Concepto['Cantidad'];
+            $conceptoDescr = $Concepto['Descripcion'];
+            $conceptoValor = $Concepto['ValorUnitario'];
+            $claveProdServ = $Concepto['ClaveProdServ'];
+            $claveUnidad = $Concepto['ClaveUnidad'];
+            $NoIdentificacion = $Concepto['NoIdentificacion'];
             $this->pdf->SetFont('Arial', '', 7);
-            $this->pdf->SetXY(35.0, 73.0);
-            $this->pdf->SetFillColor(255, 255, 255); //grey color
-            $this->pdf->MultiCell(70, 4, iconv('UTF-8', 'iso-8859-1', $nomEmisor), 1, 1, 'L', 0);
-            $ynueva1 = $this->pdf->GetY();
-            $this->pdf->SetX(35);
-            $this->pdf->Cell(70, 4, iconv('UTF-8', 'iso-8859-1', $rfcemisor), 1, 2, 'L');
-            $this->pdf->Cell(70, 4, iconv('UTF-8', 'iso-8859-1', $regFiscEmisor), 1, 2, 'L');
+            $this->pdf->SetXY($x, $y);
+            $this->pdf->Cell(5, 4, $in1, 1, 1, 'L');
 
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(10.0, 73.0);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'Razón Social'), 1, 1, 'L', 1);
-            $this->pdf->SetXY(10, $ynueva1);
-            $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'RFC'), 1, 1, 'L', 1);
-            $this->pdf->SetXY(10, $ynueva1 + 4);
-            $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'Regimen Fiscal'), 1, 1, 'L', 1);
+            $this->pdf->SetXY($x + 5, $y);
+            $this->pdf->Cell(15, 4, $conceptoCantidad, 1, 1, 'L');
 
-            $this->pdf->SetFont('Arial', 'B', 8); //RECEPTOR
-            $this->pdf->SetXY(108.0, 67.0);
-            $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'Receptor'), 0, 1, 'L', 0);
+            $this->pdf->SetXY($x + 20, $y);
+            $this->pdf->Cell(20, 4, $claveProdServ, 1, 1, 'L');
 
-            $this->pdf->SetFont('Arial', '', 7);
-            $this->pdf->SetXY(133.0, 73.0);
-            $this->pdf->SetFillColor(255, 255, 255); //grey color
-            $this->pdf->MultiCell(62, 4, iconv('UTF-8', 'iso-8859-1', $recNombre), 1, 1, 'L', 0);
-            $ynueva2 = $this->pdf->GetY();
-            $this->pdf->SetX(133);
-            $this->pdf->Cell(62, 4, $rfcReceptor, 1, 2, 'L');
-            $this->pdf->Cell(62, 4, $recUso, 1, 2, 'L');
-            // $this->pdf->Cell(62, 4, $domFiscal, 1, 2, 'L');
-            // $this->pdf->Cell(62, 4, $regFiscal, 1, 2, 'L');
+            $this->pdf->SetXY($x + 40, $y);
+            $this->pdf->Cell(20, 4, $claveUnidad, 1, 1, 'L');
 
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(108.0, 73.0);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'Razón Social'), 1, 1, 'L', 1);
-            $this->pdf->SetXY(108, $ynueva2);
-            $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'RFC'), 1, 1, 'L', 1);
-            $this->pdf->SetXY(108, $ynueva2 + 4);
-            $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'Uso CFDI'), 1, 1, 'L', 1);
-            // $this->pdf->SetXY(108, $ynueva2 + 8);
-            // $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'Domicilio Fiscal'), 1, 1, 'L', 1);
-            // $this->pdf->SetXY(108, $ynueva2 + 12);
-            // $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'Regimen Fiscal'), 1, 1, 'L', 1);
+            $this->pdf->SetXY($x + 60, $y);
+            $this->pdf->Cell(55, 4, iconv('UTF-8', 'iso-8859-1', $conceptoDescr), 1, 1, 'L');
 
-            // $this->pdf->SetFont('Arial', 'B', 8); //Conceptos
-            // $this->pdf->SetXY(10.0, 104.00);
-            // $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'Conceptos'), 0, 1, 'L', 0);
+            $this->pdf->SetXY($x + 115, $y);
+            $this->pdf->Cell(25, 4, $NoIdentificacion, 1, 1, 'L');
 
-            // $this->pdf->SetFont('Arial', 'B', 8);
-            // $this->pdf->SetXY(10.0, 110);
-            // $this->pdf->SetFillColor(211, 211, 211); //grey color
-            // $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', '#'), 1, 1, 'L', 1);
+            $this->pdf->SetXY($x + 140, $y);
+            $this->pdf->Cell(20, 4, '$' . $conceptoValor, 1, 1, 'L');
 
-            // $this->pdf->SetFont('Arial', 'B', 8);
-            // $this->pdf->SetXY(15.0, 110);
-            // $this->pdf->SetFillColor(211, 211, 211); //grey color
-            // $this->pdf->Cell(15, 4, iconv('UTF-8', 'iso-8859-1', 'Cantidad'), 1, 1, 'L', 1);
+            $this->pdf->SetXY($x + 160, $y);
+            $this->pdf->Cell(15, 4, '$' . $conceptoImporte, 1, 1, 'L');
 
-            // $this->pdf->SetFont('Arial', 'B', 8);
-            // $this->pdf->SetXY(30.0, 110);
-            // $this->pdf->SetFillColor(211, 211, 211); //grey color
-            // $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'ClavProdServ'), 1, 1, 'L', 1);
+            $y = $y + 4;
+            $in1++;
+        }
 
-            // $this->pdf->SetFont('Arial', 'B', 8);
-            // $this->pdf->SetXY(50.0, 110);
-            // $this->pdf->SetFillColor(211, 211, 211); //grey color
-            // $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'ClaveUnidad'), 1, 1, 'L', 1);
-
-            // $this->pdf->SetFont('Arial', 'B', 8);
-            // $this->pdf->SetXY(70.0, 110);
-            // $this->pdf->SetFillColor(211, 211, 211); //grey color
-            // $this->pdf->Cell(55, 4, iconv('UTF-8', 'iso-8859-1', 'Descripción'), 1, 1, 'L', 1);
-
-            // $this->pdf->SetFont('Arial', 'B', 8);
-            // $this->pdf->SetXY(125.0, 110);
-            // $this->pdf->SetFillColor(211, 211, 211); //grey color
-            // $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'NoIdentificacion'), 1, 1, 'L', 1);
-
-            // $this->pdf->SetFont('Arial', 'B', 8);
-            // $this->pdf->SetXY(150.0, 110);
-            // $this->pdf->SetFillColor(211, 211, 211); //grey color
-            // $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'Valor unitario'), 1, 1, 'L', 1);
-
-            // $this->pdf->SetFont('Arial', 'B', 8);
-            // $this->pdf->SetXY(170.0, 110);
-            // $this->pdf->SetFillColor(211, 211, 211); //grey color
-            // $this->pdf->Cell(15, 4, iconv('UTF-8', 'iso-8859-1', ' Importe'), 1, 1, 'L', 1);
-
-            // $this->pdf->SetFont('Arial', 'B', 8);
-            // $this->pdf->SetXY(170.0, 110);
-            // $this->pdf->SetFillColor(211, 211, 211); //grey color
-            // $this->pdf->Cell(15, 4, iconv('UTF-8', 'iso-8859-1', ' Importe'), 1, 1, 'L', 1);
-
-            // $x = 10.00;
-            // $y = 114.00;
-
-            $this->pdf->SetFont('Arial', 'B', 8); //Conceptos
-            $this->pdf->SetXY(10.0, 88.00);
-            $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'Conceptos'), 0, 1, 'L', 0);
-
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(10.0, 94);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', '#'), 1, 1, 'L', 1);
-
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(15.0, 94);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(15, 4, iconv('UTF-8', 'iso-8859-1', 'Cantidad'), 1, 1, 'L', 1);
-
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(30.0, 94);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'ClavProdServ'), 1, 1, 'L', 1);
-
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(50.0, 94);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'ClaveUnidad'), 1, 1, 'L', 1);
-
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(70.0, 94);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(55, 4, iconv('UTF-8', 'iso-8859-1', 'Descripción'), 1, 1, 'L', 1);
-
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(125.0, 94);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(25, 4, iconv('UTF-8', 'iso-8859-1', 'NoIdentificacion'), 1, 1, 'L', 1);
-
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(150.0, 94);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'Valor unitario'), 1, 1, 'L', 1);
-
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(170.0, 94);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(15, 4, iconv('UTF-8', 'iso-8859-1', ' Importe'), 1, 1, 'L', 1);
-
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(170.0, 94);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(15, 4, iconv('UTF-8', 'iso-8859-1', ' Importe'), 1, 1, 'L', 1);
-
-            $x = 10.00;
-            $y = 98.00;
-            $importes = array();
-            $in1 = 1;
-            
-            foreach ($xml->xpath('//cfdi:Comprobante//cfdi:Conceptos//cfdi:Concepto') as $Concepto) {
-                $conceptoFact = $Concepto['Unidad'];
-                $conceptoImporte = $Concepto['Importe'];
-                $conceptoCantidad = $Concepto['Cantidad'];
-                $conceptoDescr = $Concepto['Descripcion'];
-                $conceptoValor = $Concepto['ValorUnitario'];
-                $claveProdServ = $Concepto['ClaveProdServ'];
-                $claveUnidad = $Concepto['ClaveUnidad'];
-                $NoIdentificacion = $Concepto['NoIdentificacion'];
-                $this->pdf->SetFont('Arial', '', 7);
-                $this->pdf->SetXY($x, $y);
-                $this->pdf->Cell(5, 4, $in1, 1, 1, 'L');
-
-                $this->pdf->SetXY($x + 5, $y);
-                $this->pdf->Cell(15, 4, $conceptoCantidad, 1, 1, 'L');
-
-                $this->pdf->SetXY($x + 20, $y);
-                $this->pdf->Cell(20, 4, $claveProdServ, 1, 1, 'L');
-
-                $this->pdf->SetXY($x + 40, $y);
-                $this->pdf->Cell(20, 4, $claveUnidad, 1, 1, 'L');
-
-                $this->pdf->SetXY($x + 60, $y);
-                $this->pdf->Cell(55, 4, iconv('UTF-8', 'iso-8859-1', $conceptoDescr), 1, 1, 'L');
-
-                $this->pdf->SetXY($x + 115, $y);
-                $this->pdf->Cell(25, 4, $NoIdentificacion, 1, 1, 'L');
-
-                $this->pdf->SetXY($x + 140, $y);
-                $this->pdf->Cell(20, 4, '$' . $conceptoValor, 1, 1, 'L');
-
-                $this->pdf->SetXY($x + 160, $y);
-                $this->pdf->Cell(15, 4, '$' . $conceptoImporte, 1, 1, 'L');
-
-                $y = $y + 4;
-                $in1++;
-            }
-
-            $this->pdf->SetFont('Arial', '', 8);
-
+        $this->pdf->SetFont('Arial', '', 8);
+        if ($tipoFactura == 'educativa') {
             $y = $y + 5;
 
             $this->pdf->SetFont('Arial', 'B', 8); //Addendas
@@ -819,107 +864,117 @@ class FacturacionController extends Controller
                 $in2++;
                 $y = $y + 4;
             }
+        } else if ($tipoFactura == 'donativos') {
+            $y = $y + 5;
+            $addDonat = $versioncomplem."|" . $noAutorizacioncomplem . "|" . $fechaAutorizacioncomplem . "|".$leyenda."||"; 
 
-            $totalRec1 = number_format((float) $total, 2);
-            $n = strval($total);
-            $whole = explode('.', $n); // 1
-            $f = new NumberFormatter("es",NumberFormatter::SPELLOUT);
-            error_log($total);
-            $cantLetras = $f->format(floatval($total));
-
-            if (strpos($cantLetras, 'coma') !== false) {
-                $cantLetras = substr($cantLetras, 0, strpos($cantLetras, "coma"));
-            }
-
-            $cantLetras1 = $cantLetras . " " . $whole[1] . "/100" . " MN";
-
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(110.0, $y + 10);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'SubTotal'), 1, 1, 'L', 1);
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(130.0, $y + 10);
-            $this->pdf->Cell(65, 4, '$' . number_format((float) $subtotal, 2), 1, 1, 'L');
-
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(110.0, $y + 14);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'IVA'), 1, 1, 'L', 1);
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(130.0, $y + 14);
-            $this->pdf->Cell(65, 4, '$0.0', 1, 1, 'L');
-
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->SetXY(110.0, $y + 18);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'Total'), 1, 1, 'L', 1);
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(130.0, $y + 18);
-            $this->pdf->Cell(65, 4, '$' . $totalRec1, 1, 1, 'L');
-
-            $this->pdf->SetFont('Arial', '', 8);
-            $this->pdf->SetXY(110.0, $y + 22);
-            $this->pdf->SetFillColor(211, 211, 211); //grey color
-            $this->pdf->Cell(85, 4, iconv('UTF-8', 'iso-8859-1', $cantLetras1), 1, 1, 'C', 1);
-
-            //QR GENERADOR
-
-            $re = $rfcemisor;
-            $rr = $rfcReceptor;
-            $sellosub = substr($sello, -8);
-            $data = urlencode('https://verificacfdi.facturaelectronica.sat.gob.mx/default.aspx?re=' . $re . '&rr=' . $rr . '&tt=' . $totalRec1 . '&id=' . $uuid . "&fe=" . $sellosub);
-            $img = \QrCode::size(300)->generate($data);
-            
-            $this->pdf->Image($img, 5, $y + 5, 40, 40, "png");
-
-            
-            if ($complem == 1) {
-                $this->pdf->SetXY(45, $y + 22.5);
-                $this->pdf->SetFillColor(211, 211, 211); //grey color
-                $this->pdf->Cell(60, 4, iconv('UTF-8', 'iso-8859-1', 'CFDI Relacionado'), 1, 1, 'L', 1);
-                $this->pdf->SetFont('Arial', '', 8);
-                $this->pdf->SetXY(45.0, $y + 26.5);
-                $this->pdf->Cell(40, 4, $uuidRelacionado, 0, 1, 'L');
-                $this->pdf->SetXY(45, $y + 30.5);
-                $this->pdf->SetFillColor(211, 211, 211); //grey color
-                $this->pdf->Cell(60, 4, iconv('UTF-8', 'iso-8859-1', 'Tipo de relación'), 1, 1, 'L', 1);
-                $this->pdf->SetFont('Arial', '', 8);
-                $this->pdf->SetXY(45.0, $y + 34.5);
-                $this->pdf->Cell(40, 4, iconv('UTF-8', 'iso-8859-1', $tipoRelacion), 0, 1, 'L');
-            }
-
-            if ($y + 45 > 196) { //FOOTER DE FACTURA
-                $this->pdf->AddPage();
-                $this->pdf->AliasNbPages();
-                $y = 0;
-            }
-
-            $this->pdf->SetXY(10.0, $y + 45);
-            $this->pdf->SetFillColor(211, 211, 211);
-            $this->pdf->MultiCell(190, 4, iconv('UTF-8', 'iso-8859-1', $selloSAT), 0, 0, 'L');
-
-            $this->pdf->SetXY(10.0, $y + 65);
-            $this->pdf->MultiCell(190, 4, "SelloCFD=" . $selloCFD, 0, 0, 'L');
-
-            $this->pdf->SetXY(10.0, $y + 85);
-            $this->pdf->MultiCell(190, 4, "No Certificado=" . $certificadoSAT, 0, 0, 'L');
-
-            $this->pdf->SetXY(10.0, $y + 95);
-            $this->pdf->MultiCell(190, 4, "Fecha de timbrado=" . $fechaTimbre, 0, 0, 'L');
-
-            $this->pdf->SetXY(10.0, $y + 105);
-            $this->pdf->MultiCell(190, 4, "RFC del proveedor del certificado=" . $rfcProvCertif, 0, 0, 'L');
-
-            $this->pdf->SetXY(10.0, $y + 115);
-            $this->pdf->MultiCell(190, 4, iconv('UTF-8', 'iso-8859-1', "Cadena SAT=" . $cadena), 0, 0, 'L', 1);
-
-            $this->pdf->SetXY(60.0, $y + 135);
-            $this->pdf->SetFont('Arial', 'B', 8);
-            $this->pdf->Cell(90, 4, iconv('UTF-8', 'iso-8859-1', "Este documento es una representación impresa de un CFDI versión 3.3"), 0, 0, 'C', 1);
-            
-            return $this->pdf;
-    
+            $this->pdf->SetFont('Arial', 'B', 8); //Addendas
+            $this->pdf->SetXY(10.0, $y);
+            $this->pdf->Cell(30, 4, iconv('UTF-8', 'iso-8859-1', 'Addenda'), 0, 1, 'L', 0);
+            $this->pdf->SetFont('Arial', '', 6);
+            $this->pdf->SetXY(10.0, $y + 4);
+            $this->pdf->MultiCell(190, 4, iconv('UTF-8', 'iso-8859-1', $addDonat), 0, 1, 'L', 1);
+            $y = $y + 14;
         }
+
+
+        $totalRec1 = number_format((float) $total, 2);
+        $n = strval($total);
+        $whole = explode('.', $n); // 1
+        $f = new NumberFormatter("es", NumberFormatter::SPELLOUT);
+        error_log($total);
+        $cantLetras = $f->format(floatval($total));
+
+        if (strpos($cantLetras, 'coma') !== false) {
+            $cantLetras = substr($cantLetras, 0, strpos($cantLetras, "coma"));
+        }
+
+        $cantLetras1 = $cantLetras . " " . $whole[1] . "/100" . " MN";
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(110.0, $y + 10);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'SubTotal'), 1, 1, 'L', 1);
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(130.0, $y + 10);
+        $this->pdf->Cell(65, 4, '$' . number_format((float) $subtotal, 2), 1, 1, 'L');
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(110.0, $y + 14);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'IVA'), 1, 1, 'L', 1);
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(130.0, $y + 14);
+        $this->pdf->Cell(65, 4, '$0.0', 1, 1, 'L');
+
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->SetXY(110.0, $y + 18);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(20, 4, iconv('UTF-8', 'iso-8859-1', 'Total'), 1, 1, 'L', 1);
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(130.0, $y + 18);
+        $this->pdf->Cell(65, 4, '$' . $totalRec1, 1, 1, 'L');
+
+        $this->pdf->SetFont('Arial', '', 8);
+        $this->pdf->SetXY(110.0, $y + 22);
+        $this->pdf->SetFillColor(211, 211, 211); //grey color
+        $this->pdf->Cell(85, 4, iconv('UTF-8', 'iso-8859-1', $cantLetras1), 1, 1, 'C', 1);
+
+        $re = $rfcemisor;
+        $rr = $rfcReceptor;
+        $sellosub = substr($sello, -8);
+
+        $data = urlencode('https://verificacfdi.facturaelectronica.sat.gob.mx/default.aspx?re=' . $re . '&rr=' . $rr . '&tt=' . $totalRec1 . '&id=' . $uuid . "&fe=" . $sellosub);
+        $this->pdf->Image("http://200.188.154.68:8086/BlueSystem/db/pdfGenerar/qrgenerator.php?code=" . $data, 5, $y + 5, 40, 40, "png");
+
+
+
+        if ($complem == 1) {
+            $this->pdf->SetXY(45, $y + 22.5);
+            $this->pdf->SetFillColor(211, 211, 211); //grey color
+            $this->pdf->Cell(60, 4, iconv('UTF-8', 'iso-8859-1', 'CFDI Relacionado'), 1, 1, 'L', 1);
+            $this->pdf->SetFont('Arial', '', 8);
+            $this->pdf->SetXY(45.0, $y + 26.5);
+            $this->pdf->Cell(40, 4, $uuidRelacionado, 0, 1, 'L');
+            $this->pdf->SetXY(45, $y + 30.5);
+            $this->pdf->SetFillColor(211, 211, 211); //grey color
+            $this->pdf->Cell(60, 4, iconv('UTF-8', 'iso-8859-1', 'Tipo de relación'), 1, 1, 'L', 1);
+            $this->pdf->SetFont('Arial', '', 8);
+            $this->pdf->SetXY(45.0, $y + 34.5);
+            $this->pdf->Cell(40, 4, iconv('UTF-8', 'iso-8859-1', $tipoRelacion), 0, 1, 'L');
+        }
+
+        if ($y + 45 > 196) { //FOOTER DE FACTURA
+            $this->pdf->AddPage();
+            $this->pdf->AliasNbPages();
+            $y = 0;
+        }
+
+        $this->pdf->SetXY(10.0, $y + 45);
+        $this->pdf->SetFillColor(211, 211, 211);
+        $this->pdf->MultiCell(190, 4, iconv('UTF-8', 'iso-8859-1', $selloSAT), 0, 0, 'L');
+
+        $this->pdf->SetXY(10.0, $y + 65);
+        $this->pdf->MultiCell(190, 4, "SelloCFD=" . $selloCFD, 0, 0, 'L');
+
+        $this->pdf->SetXY(10.0, $y + 85);
+        $this->pdf->MultiCell(190, 4, "No Certificado=" . $certificadoSAT, 0, 0, 'L');
+
+        $this->pdf->SetXY(10.0, $y + 95);
+        $this->pdf->MultiCell(190, 4, "Fecha de timbrado=" . $fechaTimbre, 0, 0, 'L');
+
+        $this->pdf->SetXY(10.0, $y + 105);
+        $this->pdf->MultiCell(190, 4, "RFC del proveedor del certificado=" . $rfcProvCertif, 0, 0, 'L');
+
+        $this->pdf->SetXY(10.0, $y + 115);
+        $this->pdf->MultiCell(190, 4, iconv('UTF-8', 'iso-8859-1', "Cadena SAT=" . $cadena), 0, 0, 'L', 1);
+
+        $this->pdf->SetXY(60.0, $y + 135);
+        $this->pdf->SetFont('Arial', 'B', 8);
+        $this->pdf->Cell(90, 4, iconv('UTF-8', 'iso-8859-1', "Este documento es una representación impresa de un CFDI versión 4.0"), 0, 0, 'C', 1);
+
+        return $this->pdf;
+    }
     /**
      * guardar emisor en base de datos
      */
