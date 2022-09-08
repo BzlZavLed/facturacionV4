@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 use Codedge\Fpdf\Fpdf\Fpdf;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use \NumberFormatter;
+use Illuminate\Support\Facades\Mail;
 
 class PDF extends Fpdf
 {
@@ -187,7 +187,7 @@ class FacturacionController extends Controller
         $receptor->setAttribute('Nombre', 'BENJAMIN ZAVALA LEDESMA');
         //$receptor->setAttribute('DomicilioFiscalReceptor', $request->cuerpo['DomicilioFiscalReceptor']);
         $receptor->setAttribute('DomicilioFiscalReceptor', '67515');
-        $receptor->setAttribute('RegimenFiscalReceptor', '616'); //regimen fiscal del receptor AGREGAR A CLIENTES
+        $receptor->setAttribute('RegimenFiscalReceptor', '616'); //regimen fiscal del receptor
         //$receptor->setAttribute('UsoCFDI', $request->cuerpo['usoCfdiCliente']);
         $receptor->setAttribute('UsoCFDI', 'S01');
 
@@ -308,9 +308,19 @@ class FacturacionController extends Controller
         $this->pdf = $this->processXmlForPdfIEDU($cfdi, $complem, $cadena, $direccion, $tipoFactura);
         $pdf = $this->pdf->Output('S');
         Storage::disk('pdf')->put($uuid . '.pdf', $pdf);
-
         $urlXml = asset('xml/' . $uuid . '.xml');
         $urlPdf = asset('pdf/' . $uuid . '.pdf');
+
+        $pdfpath = public_path('pdf/' . $uuid . '.pdf');
+        $data = [
+            'cliente' => $request->cuerpo['razonCliente'],
+            'urlfile' => $pdfpath,
+            'filename' => $uuid,
+            'data' => 'Hola a continuación encontraras tu factura añadida a este correo.'
+        ];
+       
+        Mail::to($request->cuerpo['emailCliente'])->send(new \App\Mail\FacturaEmail($data));
+
         Facturas::updateOrCreate(
             ['uuid' => $result['data']['uuid']],
             [
