@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginAuthController;
 use App\Http\Controllers\FacturacionController;
 use App\Http\Controllers\ViewsController; 
-use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\DiariosController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -31,6 +31,9 @@ Route::get('objetoImpuesto',[ViewsController::class, 'objetoImpuesto'])->name('o
 Route::get('emisor',[ViewsController::class, 'emisor'])->name('emisor');//CONFIGURACION DE DATOS DE EMISOR
 Route::get('clientes', [ViewsController::class, 'clientes'])->name('clientes'); // ACTUALIZAR CLIENTES
 Route::get('conceptosInternos', [ViewsController::class, 'conceptosInternos'])->name('conceptosInternos'); // conceptosInternos
+//DIARIOS VISTAS
+Route::get('consultaDiarios', [ViewsController::class, 'consultaDiarios'])->name('consultaDiarios');
+
 
 //actions catalogs
 Route::get('getClientes', [ViewsController::class, 'getClientes'])->name('getClientes'); // conceptosInternos
@@ -53,6 +56,8 @@ Route::get('deleteConceptoInterno/{id}', [FacturacionController::class, 'deleteC
 //timbrar controller
 Route::post('timbrarFactura', [FacturacionController::class, 'timbrarFactura'])->name('timbrarFactura'); //TIMBRAR FACTURA
 
-
 //Diarios
+Route::get('consultaDiarios',[ViewsController::class, 'consultaDiarios'])->name('consultaDiarios');
+
+//Pagos de alumno
 Route::get('diarios-contabilizados',[DiariosController::class, 'diarios-contabilizados'])->name('diarios-contabilizados');

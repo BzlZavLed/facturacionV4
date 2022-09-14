@@ -302,4 +302,18 @@ class ViewsController extends Controller
             'filter' => $filter
         ]);
     }
+
+    /**
+     * VISTAS DE CONSULTA DIARIOS
+     */
+    public function consultaDiarios(){
+        $user = Auth::user();
+        $response = Http::post('http://200.188.154.68:8086/BlueSystem/db/consultas/wsAddenda.php', [
+            'bunit' => $user->bunit_account,
+            'email' => $user->email,
+            'id_proc' => "getFondos"
+        ]);
+        $fondos = $response->json();
+        return view('diarios.consultaFacturas',['fondos' => $fondos,'diarios' => '']);
+    }
 }

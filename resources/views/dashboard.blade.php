@@ -13,6 +13,7 @@
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.1/bootstrap3-editable/css/bootstrap-editable.css"
         rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.css">
     <link href="{{ asset('css/app.css') }}"
         rel="stylesheet">
 </head>
@@ -34,7 +35,7 @@
                             <a class="nav-link" href="{{ route('facturarGeneral') }}">Facturar</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('diarios-contabilizados') }}">Diarios</a>
+                            <a class="nav-link" href="{{ route('consultaDiarios') }}">Diarios</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('diarios-contabilizados') }}">Pagos de alumno</a>
@@ -104,6 +105,7 @@
     /**Editable*/
 </script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.js"></script>
 <script type="text/javascript">
     $(function() {
         $('#datetimepicker').datetimepicker();
@@ -113,5 +115,5 @@
 <script type="text/javascript" src="{{ asset('js/clienteFacturacion.controller.js') }}"></script>
 <script type="text/javascript" src="{{ asset('js/catalogos.controller.js') }}"></script>
 <script type="text/javascript" src="{{ asset('js/clienteConfiguracion.controller.js') }}"></script>
-
+<script type="text/javascript" src="{{ asset('js/clienteDiario.controller.js') }}"></script>
 </html>
