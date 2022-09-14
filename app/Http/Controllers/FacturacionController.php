@@ -79,16 +79,16 @@ class FacturacionController extends Controller
             Clientes::where('id', $request->pk)->update([$request->name => $request->value]);
             return response()->json(['code' => 200], 200);
         }
-        return "Error " . $request;
+       
     }
     /**
-     * Timbrar factura WIP
+     * Timbrar factura
      */
     public function timbrarFactura(Request $request)
     {
         /**Getting special vars */
         $emisorDB = Emisor::where('rfc_emisor', $request->cuerpo['rfc_emisor'])->firstOrFail();
-        $response = Http::get('http://200.188.154.68:8086/BlueSystem/db/consultas/wsAddenda.php', [
+        $response = Http::get(env('URL_WEBSERVICE'), [
             'rfc' => $emisorDB->rfc_emisor,
             'fondo' => $request->cuerpo['fondo'],
             'id_proc' => "folio"
@@ -269,7 +269,7 @@ class FacturacionController extends Controller
         $jsonXml = json_encode(array("data" => $xml_data)); // convert the XML string to JSON */
         $ch = curl_init();
 
-        curl_setopt($ch, CURLOPT_URL, 'http://services.test.sw.com.mx/cfdi33/issue/json/v4');
+        curl_setopt($ch, CURLOPT_URL, env('URL_FACTURACION'));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonXml);
@@ -296,7 +296,7 @@ class FacturacionController extends Controller
 
         /**CREAR XML */
         Storage::disk('xml')->put($uuid . '.xml', $cfdi);
-        $dir = Http::get('http://200.188.154.68:8086/BlueSystem/db/consultas/wsAddenda.php', [
+        $dir = Http::get(env('URL_WEBSERVICE'), [
             'fondo' => $request->cuerpo['fondo'],
             'bunit' => $request->cuerpo['bunit'],
             'id_proc' => "direccion"
@@ -935,7 +935,7 @@ class FacturacionController extends Controller
         $sellosub = substr($sello, -8);
 
         $data = urlencode('https://verificacfdi.facturaelectronica.sat.gob.mx/default.aspx?re=' . $re . '&rr=' . $rr . '&tt=' . $totalRec1 . '&id=' . $uuid . "&fe=" . $sellosub);
-        $this->pdf->Image("http://200.188.154.68:8086/BlueSystem/db/pdfGenerar/qrgenerator.php?code=" . $data, 5, $y + 5, 40, 40, "png");
+        $this->pdf->Image(env('URL_QR') . $data, 5, $y + 5, 40, 40, "png");
 
 
 
@@ -1068,8 +1068,7 @@ class FacturacionController extends Controller
     {
         $user = Auth::user();
         $bunit = $user->bunit_account;
-        // $cliente = Clientes::where('emailCliente', '=', $request->emailCliente)->first();
-        // if ($cliente == null) {
+        
         Clientes::updateOrCreate(
             ['emailCliente'  => $request->emailCliente],
             [
@@ -1084,9 +1083,6 @@ class FacturacionController extends Controller
             ]
         );
         return response()->json(['message' => 'Cliente guardado con éxito en ' . $bunit]);
-        //} else {
-        //    return response()->json(['message' => 'Cliente ya existe']);
-        //}
     }
     /**
      * Actualizar clave de producto servicio para activar o desactivar
@@ -1201,7 +1197,7 @@ class FacturacionController extends Controller
         //OBTENER FONDO DE WS
         $user = Auth::user();
         $cliente = new Client();
-        $response = $cliente->request('POST', 'http://200.188.154.68:8086/BlueSystem/db/consultas/wsAddenda.php', [
+        $response = $cliente->request('POST', env('URL_WEBSERVICE'), [
             'form_params' => [
                 'bunit' => $user->bunit_account,
                 'email' => $user->email,
@@ -1214,10 +1210,4 @@ class FacturacionController extends Controller
         return $data;
     }
 
-    /**
-     * Get student for given RFC
-     */
-    public function getStudentForGivenRFC($rfc)
-    {
-    }
 }

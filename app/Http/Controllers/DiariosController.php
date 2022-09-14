@@ -15,7 +15,7 @@ class DiariosController extends Controller
        $fondo = str_split($fondostring, 2);
        $user = Auth::user();
 
-       $response = Http::timeout(60)->get('http://200.188.154.68:8086/BlueSystem/db/consultas/wsAddenda.php', [
+       $response = Http::timeout(60)->get(env('URL_WEBSERVICE'), [
         'bunit' => $user->bunit_account,
         'fondo' => $fondo[0],
         'start' => $start,
@@ -24,7 +24,7 @@ class DiariosController extends Controller
         ]); 
         error_log($response);
         $user = Auth::user();
-        $response = Http::post('http://200.188.154.68:8086/BlueSystem/db/consultas/wsAddenda.php', [
+        $response = Http::post(env('URL_WEBSERVICE'), [
             'bunit' => $user->bunit_account,
             'email' => $user->email,
             'id_proc' => "getFondos"

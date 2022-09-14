@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
-use GuzzleHttp\Client;
+
 
 class ViewsController extends Controller
 {
@@ -73,14 +73,13 @@ class ViewsController extends Controller
         
         $fecha_timbre = Carbon::now()->toDateTimeString();
 
-        $response = Http::post('http://200.188.154.68:8086/BlueSystem/db/consultas/wsAddenda.php', [
+        $response = Http::post(env('URL_WEBSERVICE'), [
             'bunit' => $user->bunit_account,
             'email' => $user->email,
             'id_proc' => "getFondos"
         ]);
         $fondos = $response->json();
-        //error_log($response);
-        //dd($response);
+        
 
 
         return view('facturacion.clienteFacturacion', [
@@ -253,7 +252,6 @@ class ViewsController extends Controller
         $regimenFiscal = DB::Table('regimenfiscal_catalogo')
             ->where('estado', 1)
             ->get();
-        //dd(DB::getQueryLog());
         return view('facturacion.configuracion.emisor')->with(compact('emisor', 'regimenFiscal'));
     }
     /**
@@ -270,7 +268,6 @@ class ViewsController extends Controller
         } else {
             $clientes =  Clientes::paginate(20);
         }
-        //dd($clientes);
         return view('facturacion.configuracion.clientes')->with('clientes', $clientes)->with('filter', $filter);
     }
     /**Conceptos internos view loader */
@@ -294,7 +291,6 @@ class ViewsController extends Controller
                 ->select('id', 'claveProductoServicio', 'descripcionConcepto', 'cuentasContables', 'claveUnidadFacturacion', 'numeroIdent')
                 ->paginate(20);
         }
-        // return view('facturacion.configuracion.formaPago')->with('formaPago', $formaPago)->with('filter', $filter);
         return view('facturacion.configuracion.conceptosInternos', [
             'claveProdServ' => $claveProdServ,
             'claveunidad' => $claveunidad,
@@ -308,7 +304,7 @@ class ViewsController extends Controller
      */
     public function consultaDiarios(){
         $user = Auth::user();
-        $response = Http::post('http://200.188.154.68:8086/BlueSystem/db/consultas/wsAddenda.php', [
+        $response = Http::post(env('URL_WEBSERVICE'), [
             'bunit' => $user->bunit_account,
             'email' => $user->email,
             'id_proc' => "getFondos"
