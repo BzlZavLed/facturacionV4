@@ -169,11 +169,41 @@
                 </table>
             </div>
         </div>
-        
+
     </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.js"></script>
-    
+
     <script type="text/javascript" src="{{ asset('js/tools.js') }}"></script>
-    
+    <script>
+        $("#diariostable").on("click", "#facturarMovimiento", function() {
+            var $conceptos = $(this).closest("tr"),
+                $valores = $conceptos.find("td");
+            let factura = {
+                "JRNAL_TYPE": $valores[0].innerText,
+                "JRNAL_NO": $valores[1].innerText,
+                "JRNAL_LINE": $valores[2].innerText,
+                "JRNAL_SRCE": $valores[3].innerText,
+                "TRANS_DATETIME": $valores[4].innerText,
+                "PERIOD": $valores[5].innerText,
+                "ACCNT_CODE": $valores[6].innerText,
+                "AMOUNT": $valores[7].innerText,
+                "ANAL_T0": $valores[8].innerText,
+                "ANAL_T1": $valores[9].innerText,
+                "ANAL_T2": $valores[10].innerText,
+                "ANAL_T3": $valores[11].innerText,
+                "ANAL_T4": $valores[12].innerText,
+                "ANAL_T5": $valores[13].innerText,
+                "ANAL_T6": $valores[14].innerText,
+                "ANAL_T7": $valores[15].innerText,
+                "ANAL_T8": $valores[16].innerText,
+                "ANAL_T9": $valores[17].innerText,
+                "TREFERENCE": $valores[18].innerText,
+                "DESCRIPTN": $valores[19].innerText
+            }
+            setCookie("facturaDiario", factura, 1, true);
+            window.location.href = "{{ route("facturarGeneral") }}";
+
+        })
+    </script>
 @endsection
