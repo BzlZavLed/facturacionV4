@@ -19,6 +19,8 @@ var counterRow = 0;
 var conceptosArray = [];
 var impuestosArray = [];
 var addendaAlumnos = [];
+
+
 /**
  *DOM Manipulation Emisor section in Facturacion View
  */

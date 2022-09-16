@@ -205,6 +205,7 @@
                                 label="{{ $item->id }} - {{ $item->descripcionConcepto }}"
                                 claveProdServ="{{ $item->claveProductoServicio }}"
                                 claveUnidadFacturacion="{{ $item->claveUnidadFacturacion }}"
+                                cuentas="{{ $item->cuentasContables }}"
                                 numeroIdentificacion="{{ $item->numeroIdent }}" id="{{ $item->id }}">
                         @endforeach
                     </datalist>
@@ -457,6 +458,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script type="text/javascript" src="{{ asset('js/tools.js') }}"></script>
     <script>
+        var diario = getCookie('facturaDiario');
+        if(diario){
+            diario = JSON.parse(diario);
+            console.log(diario);
+        
+            var cuentas = {!! json_encode($concepto_internos->toArray(), JSON_HEX_TAG) !!};
+            var selectIndex = null;
+            cuentas.forEach(function callback(value, index) {
+                var cuentasInternas = value.cuentasContables.split(',');
+                if(cuentasInternas.includes(diario.ANAL_T1)){
+                    selectIndex = index;
+                }
+            });
+            $("#claveProductoServicio").val(cuentas[selectIndex].claveProductoServicio);
+            $("#noIdentificacion").val(cuentas[selectIndex].numeroIdent);
+            $("#claveUnidadFacturacion").val(cuentas[selectIndex].claveUnidadFacturacion);
+            $("#descripcionConcepto").val(cuentas[selectIndex].descripcionConcepto);
+            (diario.AMOUNT < 0) ? $("#importeConcepto").val(diario.AMOUNT*-1) : $("#importeConcepto").val(diario.AMOUNT);
+            $("#datetimepickerinput").val(diario.TRANS_DATETIME);
+            
+            console.log(cuentas[selectIndex]);
+        }
         var clientes = {!! json_encode($clientes->toArray(), JSON_HEX_TAG) !!};
         setCookie("bunit",@json(Auth::user()->bunit_account),2);
         

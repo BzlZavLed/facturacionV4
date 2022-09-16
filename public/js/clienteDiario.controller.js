@@ -130,6 +130,5 @@ $("#diariostable").on("click", "#facturarMovimiento", function () {
         "TREFERENCE" : $valores[18].innerText,
         "DESCRIPTN" : $valores[19].innerText
     }
-    console.log(factura);
-    setCookie("facturaDiario",factura,1);
+    setCookie("facturaDiario",factura,1,true);
 })
